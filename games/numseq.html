@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NUMBERWAVE - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">NUMBERWAVE</div>
+        <div id="gs-desc">Find the next number in the sequence.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.numseq = function() {
+  var SEQ=[
+    {s:[2,4,6,8,10],next:12,rule:'Even numbers +2'},
+    {s:[1,1,2,3,5],next:8,rule:'Fibonacci'},
+    {s:[1,4,9,16,25],next:36,rule:'Perfect squares'},
+    {s:[3,6,12,24,48],next:96,rule:'Multiply by 2'},
+    {s:[1,3,7,15,31],next:63,rule:'x2 + 1'},
+    {s:[2,3,5,7,11],next:13,rule:'Prime numbers'},
+    {s:[0,1,4,9,16],next:25,rule:'Squares from 0'},
+    {s:[5,10,20,40,80],next:160,rule:'Double each'},
+    {s:[1,8,27,64,125],next:216,rule:'Cubes'},
+    {s:[100,50,25,12,6],next:3,rule:'Halve (rounded)'},
+  ].sort(function(){return Math.random()-0.5;});
+
+  var idx=0,score=0,answered=false;
+  var C=gc();
+  var wrap=el('div','wrap');
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','NUMBERWAVE'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; render(); });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="nsSc">0</span>&nbsp;&nbsp;&nbsp;ROUND: <span class="hv" id="nsR">1</span>/'+SEQ.length; wrap.appendChild(hud);
+
+  var body=el('div',''); body.id='nsBody'; wrap.appendChild(body);
+  C.appendChild(wrap);
+
+  sb.addEventListener('click', function(){ ov.style.display='none'; });
+
+  function fakes(ans,n){ var f=[]; while(f.length<n){ var d=Math.floor(Math.random()*20)-10; var v=Math.abs(ans)+d; if(v!==ans&&v>0&&f.indexOf(v)===-1)f.push(v); } return f; }
+
+  function render(){
+    if(idx>=SEQ.length){
+      body.innerHTML='';
+      var done=el('div',''); done.style.cssText='text-align:center;padding:2rem';
+      done.innerHTML='<div style="font-size:1.4rem;font-weight:900;color:var(--cyan)">COMPLETE!</div><div style="font-size:3rem;font-weight:900;color:var(--yellow);margin:1rem">'+score+'/'+SEQ.length*100+'</div>';
+      var rb=mkBtn('PLAY AGAIN','p'); rb.style.margin='0 auto'; rb.style.display='block';
+      rb.addEventListener('click',function(){ stopAll(); gc().innerHTML=''; BUILDERS.numseq(); });
+      done.appendChild(rb); body.appendChild(done); return;
+    }
+    answered=false;
+    document.getElementById('nsR').textContent=idx+1;
+    var q=SEQ[idx];
+    var numFakes = [1, 3, 5][diff];
+    var opts=[q.next].concat(fakes(q.next,numFakes)).sort(function(){return Math.random()-0.5;});
+    body.innerHTML='';
+    var numD=el('div','numD'); numD.textContent=q.s.join(' - ')+' - ?'; body.appendChild(numD);
+    var optsDiv=el('div','numopts'); body.appendChild(optsDiv);
+    var msgD=el('div','msg'); msgD.id='nsMsg'; body.appendChild(msgD);
+    opts.forEach(function(o){
+      var b=el('button','numopt'); b.textContent=o;
+      b.addEventListener('click',function(){
+        if(answered)return; answered=true;
+        var ok=o===q.next;
+        if(ok) score+=100;
+        document.getElementById('nsSc').textContent=score;
+        optsDiv.querySelectorAll('.numopt').forEach(function(x){
+          x.disabled=true;
+          if(+x.textContent===q.next) x.style.borderColor='var(--green)';
+          else if(+x.textContent===o&&!ok) x.style.borderColor='var(--pink)';
+        });
+        document.getElementById('nsMsg').textContent=(ok?'CORRECT! ':'Wrong! Answer: '+q.next+' | ')+'Rule: '+q.rule;
+        setTimeout(function(){ idx++; render(); },1400);
+      });
+      optsDiv.appendChild(b);
+    });
+  }
+  render();
+};
+BUILDERS.numseq();
+    </script>
+</body>
+</html>

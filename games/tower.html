@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STACKER - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">STACKER</div>
+        <div id="gs-desc">Time your taps to stack blocks as high as you can.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.tower = function() {
+  var C=gc(); var wrap=el('div','wrap'); wrap.style.position='relative';
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="stSc">0</span>&nbsp;&nbsp;&nbsp;TAP TO STACK'; wrap.appendChild(hud);
+  var cv=document.createElement('canvas'); cv.width=300; cv.height=500; cv.style.display='block'; cv.style.margin='0 auto'; wrap.appendChild(cv);
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','STACKER'); ov.appendChild(ovT); 
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb); wrap.appendChild(ov); C.appendChild(wrap);
+  
+  var ctx=cv.getContext('2d');
+
+  var stack=[],cur={x:0,y:470,w:150,h:30,dir:1},speed=3,score=0,running=false;
+
+  function reset(){ 
+    stack=[{x:75,y:470,w:150,h:30}]; 
+    cur={x:0,y:440,w:150,h:30,dir:1}; 
+    speed = [2.5, 4, 6][diff];
+    score=0; 
+  }
+
+  function drop(){
+    if(!running)return;
+    var prev=stack[stack.length-1];
+    var left=Math.max(cur.x,prev.x), right=Math.min(cur.x+cur.w,prev.x+prev.w);
+    if(left>=right){ running=false; return; }
+    cur.x=left; cur.w=right-left;
+    stack.push(JSON.parse(JSON.stringify(cur)));
+    score++; document.getElementById('stSc').textContent=score;
+    if(score%5===0) speed += [0.4, 0.8, 1.2][diff];
+    cur.y-=30; cur.x=0;
+    if(cur.y<100){ stack.forEach(function(s){s.y+=30;}); cur.y+=30; }
+  }
+
+  sb.addEventListener('click',function(){ reset(); running=true; ov.style.display='none'; document.getElementById('stSc').textContent=0; });
+  cv.addEventListener('mousedown',function(e){ e.preventDefault(); drop(); });
+  cv.addEventListener('touchstart',function(e){ e.preventDefault(); drop(); },{passive:false});
+  addKey(function(e){ if(e.code==='Space')drop(); });
+
+  addLoop(function(){
+    if(!running){
+      if(stack.length > 1){ ovT.textContent='GAME OVER'; sb.textContent='RESTART'; ov.style.display='flex'; }
+      return;
+    }
+    cur.x+=cur.dir*speed;
+    if(cur.x+cur.w>cv.width||cur.x<0)cur.dir*=-1;
+
+    ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.shadowBlur=15;
+    stack.forEach(function(s,i){ ctx.fillStyle='hsl('+(i*20)%360+',100%,60%)'; ctx.shadowColor=ctx.fillStyle; ctx.fillRect(s.x,s.y,s.w,s.h); });
+    ctx.fillStyle='#fff'; ctx.shadowColor='#fff'; ctx.fillRect(cur.x,cur.y,cur.w,cur.h);
+    ctx.shadowBlur=0;
+  }, 1000/60);
+};
+BUILDERS.tower();
+    </script>
+</body>
+</html>

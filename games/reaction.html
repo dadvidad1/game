@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REFLEX TEST - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">REFLEX TEST</div>
+        <div id="gs-desc">Click when green. Measures your reaction time.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.reaction = function() {
+  var C=gc();
+  var wrap=el('div','wrap');
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','REFLEX TEST'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+
+  var hud=el('div','hud'); hud.innerHTML='ROUNDS: <span class="hv" id="rxR">0</span>/5&nbsp;&nbsp;&nbsp;AVG: <span class="hv" id="rxA">-</span> ms&nbsp;&nbsp;&nbsp;BEST: <span class="hv" id="rxB">-</span> ms'; wrap.appendChild(hud);
+
+  var area=el('div',''); area.id='rxArea'; area.style.cssText='width:100%;height:260px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;background:rgba(255,0,110,0.07);transition:background .15s';
+  var txt=el('div',''); txt.id='rxTxt'; txt.className='pulse'; txt.style.cssText='font-size:1.4rem;font-weight:900;text-align:center;pointer-events:none;letter-spacing:.1em;color:#6b6b80'; txt.textContent='CLICK TO START';
+  area.appendChild(txt); wrap.appendChild(area);
+  var hist=el('div',''); hist.style.cssText='display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:.8rem;font-size:.72rem;color:#6b6b80'; hist.id='rxHist'; wrap.appendChild(hist);
+  C.appendChild(wrap);
+
+  sb.addEventListener('click', function(){ ov.style.display='none'; area.click(); });
+
+  var state='idle',t0,results=[],waitTimer;
+
+  area.addEventListener('click',function(){
+    if(state==='idle'){
+      if(results.length>=5)return;
+      state='waiting'; area.style.background='rgba(255,0,110,0.07)';
+      txt.textContent='Wait for GREEN...'; txt.className='pulse'; txt.style.color='#ffe600';
+      clearTimeout(waitTimer);
+      waitTimer=setTimeout(function(){
+        if(state!=='waiting')return;
+        state='go'; area.style.background='rgba(57,255,20,0.18)';
+        txt.textContent='CLICK NOW!'; txt.className=''; txt.style.color='#39ff14';
+        t0=performance.now();
+      }, [1500, 1000, 500][diff] + Math.random() * [4000, 3000, 2000][diff]);
+      stopFns.push(function(){ clearTimeout(waitTimer); });
+    } else if(state==='waiting'){
+      state='idle'; clearTimeout(waitTimer);
+      txt.textContent='TOO EARLY! Click to try again'; txt.style.color='var(--pink)'; txt.className='';
+      setTimeout(function(){ if(state==='idle'){txt.textContent='CLICK TO START';txt.style.color='#6b6b80';txt.className='pulse';} },1500);
+    } else if(state==='go'){
+      var ms=Math.round(performance.now()-t0);
+      results.push(ms); state='idle';
+      area.style.background='rgba(255,0,110,0.07)';
+      var rounds=results.length;
+      document.getElementById('rxR').textContent=rounds;
+      var avg=Math.round(results.reduce(function(a,b){return a+b;},0)/rounds);
+      var best=Math.min.apply(null,results);
+      document.getElementById('rxA').textContent=avg;
+      document.getElementById('rxB').textContent=best;
+      var thresholds = [450, 300, 210][diff];
+      var rating=ms<thresholds*0.6?'INSANE':ms<thresholds*0.8?'FAST':ms<thresholds?'OK':'SLOW';
+      hist.innerHTML=results.map(function(r,i){return '<span>'+(i+1)+': '+r+'ms</span>';}).join('');
+      if(rounds>=5){ 
+        txt.textContent='DONE! Avg: '+avg+'ms Best: '+best+'ms'; txt.style.color='var(--cyan)'; txt.className=''; 
+        var rb=mkBtn('PLAY AGAIN','p'); rb.style.margin='1rem auto'; rb.style.display='block';
+        rb.addEventListener('click',function(){ stopAll(); gc().innerHTML=''; BUILDERS.reaction(); });
+        wrap.appendChild(rb);
+      }
+      else{ txt.textContent=ms+'ms - '+rating+' - Click for round '+(rounds+1); txt.style.color='#e8e8f0'; txt.className=''; }
+    }
+  });
+};
+BUILDERS.reaction();
+    </script>
+</body>
+</html>

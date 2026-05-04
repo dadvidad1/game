@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PONG - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">PONG</div>
+        <div id="gs-desc">Move your paddle with the mouse. First to 7 wins.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.pong = function() {
+  var C = gc();
+  var wrap = el('div','wrap'); wrap.style.position='relative';
+
+  var hud = el('div','hud');
+  hud.innerHTML='YOU: <span class="hv" id="pgPl">0</span>&nbsp;&nbsp;&nbsp;Move mouse/touch over canvas&nbsp;&nbsp;&nbsp;AI: <span class="hv" id="pgAi">0</span>';
+  wrap.appendChild(hud);
+
+  var cv = document.createElement('canvas');
+  cv.width=600; cv.height=360; cv.style.width='100%'; cv.style.display='block';
+  wrap.appendChild(cv);
+
+  var ov = el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title'); ovT.textContent='PONG'; ovT.style.color='#00f5ff'; ov.appendChild(ovT);
+  var ovS=el('div','ov-sub'); ovS.textContent='First to 7 wins!'; ov.appendChild(ovS);
+  var diff = mkDifficulty(ov, function(d){ 
+    diff = d; 
+    best = getBestScore('pong');
+    updateHud();
+  });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+  C.appendChild(wrap);
+  
+  var ctx=cv.getContext('2d');
+  var W=600,H=360,PH=70,PW=10,BR=7;
+  var pl={y:H/2-PH/2},ai={y:H/2-PH/2},ball={x:W/2,y:H/2,vx:4,vy:3};
+  var plSc=0,aiSc=0,running=false,mouseY=H/2;
+  var best = getBestScore('pong');
+  
+  function updateHud() {
+    hud.innerHTML='YOU: <span class="hv" id="pgPl">'+plSc+'</span>&nbsp;&nbsp;&nbsp;BEST: <span class="hv">'+best+'</span>&nbsp;&nbsp;&nbsp;AI: <span class="hv" id="pgAi">'+aiSc+'</span>';
+  }
+  updateHud();
+
+  function resetBall(){ ball.x=W/2; ball.y=H/2; ball.vx=(Math.random()>0.5?1:-1)*4; ball.vy=(Math.random()-0.5)*6; }
+
+  cv.addEventListener('mousemove',function(e){ var r=cv.getBoundingClientRect(); mouseY=(e.clientY-r.top)*(H/r.height); });
+  cv.addEventListener('touchmove',function(e){ e.preventDefault(); var r=cv.getBoundingClientRect(); mouseY=(e.touches[0].clientY-r.top)*(H/r.height); },{passive:false});
+
+  function draw(){
+    ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,W,H);
+    ctx.setLineDash([8,8]); ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(0,245,255,0.75)'; ctx.shadowColor='#00f5ff'; ctx.shadowBlur=12;
+    ctx.fillRect(10,pl.y,PW,PH);
+    ctx.fillStyle='rgba(255,0,110,0.75)'; ctx.shadowColor='#ff006e';
+    ctx.fillRect(W-20,ai.y,PW,PH);
+    ctx.fillStyle='white'; ctx.shadowColor='white'; ctx.shadowBlur=16;
+    ctx.beginPath(); ctx.arc(ball.x,ball.y,BR,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='bold 26px monospace'; ctx.textAlign='center';
+    ctx.fillText(plSc,W/4,34); ctx.fillText(aiSc,3*W/4,34);
+  }
+
+  addLoop(function(){
+    if(!running){ draw(); return; }
+    pl.y = Math.max(0,Math.min(H-PH, mouseY-PH/2));
+    var ac=ai.y+PH/2;
+    var aiSpd = [2.2, 3.2, 4.5][diff];
+    if(ac<ball.y-8) ai.y+=aiSpd; else if(ac>ball.y+8) ai.y-=aiSpd;
+    ai.y=Math.max(0,Math.min(H-PH,ai.y));
+    ball.x+=ball.vx; ball.y+=ball.vy;
+    if(ball.y-BR<0||ball.y+BR>H) ball.vy=-ball.vy;
+    if(ball.x-BR<20&&ball.y>pl.y&&ball.y<pl.y+PH){ball.vx=Math.abs(ball.vx)*1.04;ball.vy+=(ball.y-(pl.y+PH/2))*0.08;}
+    if(ball.x+BR>W-20&&ball.y>ai.y&&ball.y<ai.y+PH){ball.vx=-Math.abs(ball.vx)*1.04;ball.vy+=(ball.y-(ai.y+PH/2))*0.08;}
+    if(ball.x<0){aiSc++;updateHud();resetBall();}
+    if(ball.x>W){plSc++;updateHud();resetBall();}
+    if(plSc>=7||aiSc>=7){
+      running=false;
+      if(plSc>=7){
+        var diffBonus = [100, 250, 500][diff];
+        var winScore = diffBonus + (plSc - aiSc) * 50;
+        if(saveScore('pong', winScore)){
+          best = winScore; updateHud();
+          ovT.textContent = 'NEW RECORD: ' + winScore;
+        } else {
+          ovT.textContent = 'YOU WIN!';
+        }
+      } else {
+        ovT.textContent = 'AI WINS';
+      }
+      ov.style.display='flex';
+    }
+    draw();
+  },16);
+
+  sb.addEventListener('click',function(){ 
+    plSc=0;aiSc=0;running=true;resetBall(); 
+    ov.style.display='none'; 
+    updateHud(); 
+  });
+  draw();
+};
+BUILDERS.pong();
+    </script>
+</body>
+</html>

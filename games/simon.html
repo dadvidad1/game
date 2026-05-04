@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON SAYS - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">NEON SAYS</div>
+        <div id="gs-desc">Repeat the sequence of lights and sounds.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.simon = function() {
+  var C=gc(); var wrap=el('div','wrap');
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','NEON SAYS'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+
+  var hud=el('div','hud'); hud.innerHTML='LEVEL: <span class="hv" id="siL">1</span>&nbsp;&nbsp;&nbsp;WATCH THE SEQUENCE'; wrap.appendChild(hud);
+
+  var grid=el('div','s-grid'); wrap.appendChild(grid);
+  var colors=['r','g','b','y'];
+  colors.forEach(function(c,i){ var b=el('div','s-btn '+c); b.id='sb'+i; grid.appendChild(b); });
+  var cbar=el('div','cbar'); var sb=mkBtn('START','p'); cbar.appendChild(sb); wrap.appendChild(cbar);
+  C.appendChild(wrap);
+
+  var seq=[],user=[],playing=false,idx=0;
+
+  function flash(i){
+    var b=document.getElementById('sb'+i); b.classList.add('active');
+    var duration = [600, 400, 250][diff];
+    setTimeout(function(){ b.classList.remove('active'); }, duration);
+  }
+
+  function playSeq(){
+    playing=true; user=[]; idx=0; document.querySelector('.hud').innerHTML='LEVEL: <span class="hv">'+seq.length+'</span>&nbsp;&nbsp;&nbsp;WATCH...';
+    var i=0;
+    var interval = [1000, 800, 500][diff];
+    var tId=setInterval(function(){
+      flash(seq[i]); i++;
+      if(i>=seq.length){ clearInterval(tId); playing=false; document.querySelector('.hud').innerHTML='LEVEL: <span class="hv">'+seq.length+'</span>&nbsp;&nbsp;&nbsp;YOUR TURN!'; }
+    }, interval);
+  }
+
+  function nextLevel(){ seq.push(Math.floor(Math.random()*4)); playSeq(); }
+
+  colors.forEach(function(_,i){
+    document.getElementById('sb'+i).addEventListener('click',function(){
+      if(playing||!seq.length)return;
+      flash(i);
+      if(i===seq[idx]){
+        idx++;
+        if(idx===seq.length){ setTimeout(nextLevel,1000); }
+      } else {
+        document.querySelector('.hud').innerHTML='GAME OVER! FINAL LEVEL: <span class="hv">'+seq.length+'</span>';
+        seq=[]; ov.style.display='flex'; sb.textContent='RESTART';
+      }
+    });
+  });
+
+  sb.addEventListener('click',function(){ seq=[]; ov.style.display='none'; nextLevel(); });
+};
+BUILDERS.simon();
+    </script>
+</body>
+</html>

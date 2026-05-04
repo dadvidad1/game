@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIXEL PAINT - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">PIXEL PAINT</div>
+        <div id="gs-desc">Draw 16x16 pixel art. Pick colors and paint!</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.pixel = function() {
+  var SIZE=16,SCALE=24;
+  var PAL=['#0a0a0f','#ffffff','#ff006e','#00f5ff','#39ff14','#ffe600','#bf5af2','#ff9500','#ff375f','#1565c0','#2e7d32','#b71c1c','#4a148c','#e65100','#880e4f','#006064'];
+  var sel=PAL[1], painting=false;
+  var pixels=new Array(SIZE*SIZE).fill(PAL[0]);
+
+  var C=gc();
+  var wrap=el('div','wrap');
+  var hud=el('div','hud'); hud.innerHTML='PIXEL PAINT&nbsp;&nbsp;&nbsp;16x16 Canvas&nbsp;&nbsp;&nbsp;<span id="ppCoord">x:- y:-</span>'; wrap.appendChild(hud);
+  var cv=document.createElement('canvas'); cv.width=SIZE*SCALE; cv.height=SIZE*SCALE;
+  cv.style.cssText='display:block;width:100%;max-width:'+(SIZE*SCALE)+'px;margin:0 auto;cursor:crosshair;image-rendering:pixelated';
+  cv.id='ppCv'; wrap.appendChild(cv);
+
+  var pal=el('div','palette');
+  PAL.forEach(function(col){
+    var sw=el('div','swatch'+(col===sel?' sel':''));
+    sw.style.background=col; if(col==='#0a0a0f')sw.style.border='2px solid #2a2a3a';
+    sw.addEventListener('click',function(){ sel=col; document.querySelectorAll('.swatch').forEach(function(s){s.classList.remove('sel');}); sw.classList.add('sel'); });
+    pal.appendChild(sw);
+  });
+  wrap.appendChild(pal);
+
+  var cbar=el('div','cbar');
+  var clrB=mkBtn('CLEAR','d'); clrB.addEventListener('click',function(){ pixels.fill(PAL[0]); drawAll(); });
+  var dlB=mkBtn('DOWNLOAD PNG','p'); dlB.addEventListener('click',function(){ var a=document.createElement('a'); a.download='pixel-art.png'; a.href=cv.toDataURL(); a.click(); });
+  cbar.appendChild(clrB); cbar.appendChild(dlB); wrap.appendChild(cbar);
+  C.appendChild(wrap);
+
+  var ctx=cv.getContext('2d');
+  function drawAll(){ pixels.forEach(function(c,i){ var x=(i%SIZE)*SCALE,y=Math.floor(i/SIZE)*SCALE; ctx.fillStyle=c; ctx.fillRect(x,y,SCALE,SCALE); ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.strokeRect(x,y,SCALE,SCALE); }); }
+
+  function paint(e){ var r=cv.getBoundingClientRect(); var sx=cv.width/r.width,sy=cv.height/r.height; var px=Math.floor((e.clientX-r.left)*sx/SCALE),py=Math.floor((e.clientY-r.top)*sy/SCALE); if(px<0||px>=SIZE||py<0||py>=SIZE)return; document.getElementById('ppCoord').textContent='x:'+px+' y:'+py; pixels[py*SIZE+px]=sel; drawAll(); }
+
+  function onUp(){painting=false;}
+  cv.addEventListener('mousedown',function(e){painting=true;paint(e);});
+  cv.addEventListener('mousemove',function(e){if(painting)paint(e);});
+  document.addEventListener('mouseup',onUp);
+  cv.addEventListener('touchstart',function(e){painting=true;paint(e.touches[0]);e.preventDefault();},{passive:false});
+  cv.addEventListener('touchmove',function(e){paint(e.touches[0]);e.preventDefault();},{passive:false});
+  document.addEventListener('touchend',onUp);
+  stopFns.push(function(){ document.removeEventListener('mouseup',onUp); document.removeEventListener('touchend',onUp); });
+  drawAll();
+};
+BUILDERS.pixel();
+    </script>
+</body>
+</html>

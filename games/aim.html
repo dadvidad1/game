@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIM TRAINER - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">AIM TRAINER</div>
+        <div id="gs-desc">Click the targets as fast as possible. 30 seconds.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.aim = function() {
+  var C=gc(); var wrap=el('div','wrap'); wrap.style.position='relative';
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="aiSc">0</span>&nbsp;&nbsp;&nbsp;TIME: <span class="hv" id="aiT">30</span>s'; wrap.appendChild(hud);
+  var cv=document.createElement('canvas'); cv.width=600; cv.height=400; cv.style.width='100%'; cv.style.display='block'; wrap.appendChild(cv);
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','AIM TRAINER'); ov.appendChild(ovT); 
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb); wrap.appendChild(ov); C.appendChild(wrap);
+  
+  var ctx=cv.getContext('2d');
+
+  var target={x:0,y:0,r:25},score=0,timeLeft=30,running=false;
+
+  function spawn(){ 
+    var baseR = [35, 25, 15][diff];
+    target.r = Math.max(8, baseR - Math.floor(score/10) * (diff + 1));
+    target.x=target.r+Math.random()*(cv.width-target.r*2); 
+    target.y=target.r+Math.random()*(cv.height-target.r*2); 
+  }
+
+  sb.addEventListener('click',function(){
+    score=0; timeLeft=30; running=true; ov.style.display='none'; spawn();
+    var tId=setInterval(function(){
+      timeLeft--; document.getElementById('aiT').textContent=timeLeft;
+      if(timeLeft<=0){ clearInterval(tId); running=false; ovT.textContent='FINAL SCORE: '+score; sb.textContent='RESTART'; ov.style.display='flex'; }
+    },1000);
+    stopFns.push(function(){ clearInterval(tId); });
+  });
+
+  cv.addEventListener('mousedown',function(e){
+    if(!running)return;
+    var r=cv.getBoundingClientRect(); var sx=cv.width/r.width,sy=cv.height/r.height;
+    var mx=(e.clientX-r.left)*sx, my=(e.clientY-r.top)*sy;
+    var d=Math.sqrt((mx-target.x)**2 + (my-target.y)**2);
+    if(d<target.r){ score++; document.getElementById('aiSc').textContent=score; target.r=Math.max(10, 25-Math.floor(score/10)*2); spawn(); }
+  });
+
+  addLoop(function(){
+    ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,cv.width,cv.height);
+    if(!running)return;
+    ctx.fillStyle='rgba(0,245,255,0.2)'; ctx.strokeStyle='var(--cyan)'; ctx.lineWidth=2; ctx.shadowColor='var(--cyan)'; ctx.shadowBlur=15;
+    ctx.beginPath(); ctx.arc(target.x,target.y,target.r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(target.x,target.y,target.r*0.6,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(target.x,target.y,target.r*0.2,0,Math.PI*2); ctx.stroke();
+    ctx.shadowBlur=0;
+  }, 1000/60);
+};
+BUILDERS.aim();
+    </script>
+</body>
+</html>

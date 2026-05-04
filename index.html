@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEON ARCADE</title>
+<link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+
+<header>
+  <h1>NEON ARCADE</h1>
+  <div class="sub">// 15 GAMES LOADED — SELECT YOUR CHALLENGE //</div>
+</header>
+
+<nav id="nav"></nav>
+
+<div style="text-align:center;margin-bottom:1rem">
+  <a href="settings.html" class="nBtn" style="text-decoration:none;display:inline-block">⚙ SETTINGS</a>
+</div>
+
+<div id="hub">
+  <div class="sec-title"><span>//</span> CLASSIC GAMES</div>
+  <div class="grid" id="classicGrid"></div>
+  <div class="sec-title"><span>//</span> PUZZLES & BRAIN <span style="color:var(--yellow)">&#9734;</span></div>
+  <div class="grid" id="puzzleGrid"></div>
+  <div class="sec-title"><span>//</span> UNIQUE ORIGINALS <span style="color:var(--yellow)">&#9733;</span></div>
+  <div class="grid" id="uniqueGrid"></div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// REGISTRY
+// ─────────────────────────────────────────────
+var GAMES = [
+  {id:'snake',   name:'SNAKE',        icon:'S',  tag:'classic', accent:'#39ff14', desc:'Arrow keys / WASD. Eat food, grow, survive.'},
+  {id:'pong',    name:'PONG',         icon:'P',  tag:'classic', accent:'#00f5ff', desc:'Move your paddle with the mouse. First to 7 wins.'},
+  {id:'tetris',  name:'TETRIS',       icon:'T',  tag:'classic', accent:'#bf5af2', desc:'Arrow keys to move/rotate. Fill rows to clear them.'},
+  {id:'wordle',  name:'WORDLE',       icon:'W',  tag:'puzzle',  accent:'#ffe600', desc:'Guess the 5-letter word in 6 tries.'},
+  {id:'memory',  name:'MEMORY',       icon:'M',  tag:'puzzle',  accent:'#ff006e', desc:'Flip cards and match all pairs.'},
+  {id:'quiz',    name:'TRIVIA QUIZ',  icon:'Q',  tag:'puzzle',  accent:'#00f5ff', desc:'10 trivia questions. How many can you get right?'},
+  {id:'mine',    name:'MINESWEEPER',  icon:'B',  tag:'puzzle',  accent:'#39ff14', desc:'Left-click to reveal, right-click to flag mines.'},
+  {id:'typer',   name:'TYPE RACER',   icon:'K',  tag:'classic', accent:'#39ff14', desc:'Type the word shown before time runs out!'},
+  {id:'reaction',name:'REFLEX TEST',  icon:'R',  tag:'unique',  accent:'#ffe600', desc:'Click when green. Measures your reaction time.'},
+  {id:'pixel',   name:'PIXEL PAINT',  icon:'X',  tag:'unique',  accent:'#ff006e', desc:'Draw 16x16 pixel art. Pick colors and paint!'},
+  {id:'cipher',  name:'CIPHER QUEST', icon:'C',  tag:'puzzle',  accent:'#bf5af2', desc:'Decode Caesar-ciphered messages to earn points.'},
+  {id:'color',   name:'COLOR MATCH',  icon:'O',  tag:'unique',  accent:'#ff006e', desc:'Mix RGB sliders to match the target color.'},
+  {id:'numseq',  name:'NUMBERWAVE',   icon:'N',  tag:'puzzle',  accent:'#00f5ff', desc:'Find the next number in the sequence.'},
+  {id:'dino',    name:'DINO RUN',     icon:'D',  tag:'unique',  accent:'#39ff14', desc:'Space/Tap to jump. Avoid obstacles and survive.'},
+  {id:'invaders',name:'INVADERS',     icon:'V',  tag:'classic', accent:'#ff006e', desc:'Arrow keys to move, Space to shoot.'},
+  {id:'flappy',  name:'NEON FLAP',    icon:'F',  tag:'classic', accent:'#ffe600', desc:'Tap/Space to flap. Navigate through the neon pipes.'},
+  {id:'g2048',   name:'2048 NEON',    icon:'2',  tag:'puzzle',  accent:'#bf5af2', desc:'Arrow keys to slide tiles. Reach the 2048 tile!'},
+  {id:'tictac',  name:'TIC-TAC-TOE',  icon:'O',  tag:'classic', accent:'#00f5ff', desc:'Classic X vs O against an unbeatable AI.'},
+  {id:'breakout',name:'BREAKOUT',     icon:'H',  tag:'classic', accent:'#ff006e', desc:'Bounce the ball to break all the neon bricks.'},
+  {id:'tower',   name:'STACKER',      icon:'L',  tag:'unique',  accent:'#39ff14', desc:'Time your taps to stack blocks as high as you can.'},
+  {id:'aim',     name:'AIM TRAINER',  icon:'G',  tag:'unique',  accent:'#ffe600', desc:'Click the targets as fast as possible. 30 seconds.'},
+  {id:'hextris', name:'HEX GLOW',     icon:'H',  tag:'puzzle',  accent:'#bf5af2', desc:'Rotate the hexagon to match incoming colors.'},
+  {id:'whack',   name:'WHACK-A-NEON', icon:'!',  tag:'classic', accent:'#ff006e', desc:'Whack the glowing icons before they disappear.'},
+  {id:'simon',   name:'NEON SAYS',    icon:'S',  tag:'puzzle',  accent:'#39ff14', desc:'Repeat the sequence of lights and sounds.'},
+  {id:'binary',  name:'BIT SHIFT',    icon:'0',  tag:'unique',  accent:'#00f5ff', desc:'Convert binary to decimal as fast as you can.'},
+];
+
+// ─────────────────────────────────────────────
+// HUB
+// ─────────────────────────────────────────────
+function buildHub() {
+  var cg = document.getElementById('classicGrid');
+  var ug = document.getElementById('uniqueGrid');
+  var pg = document.getElementById('puzzleGrid');
+  GAMES.forEach(function(g) {
+    var el = document.createElement('a');
+    el.href = 'games/' + g.id + '.html';
+    el.className = 'gcard';
+    el.style.textDecoration = 'none';
+    el.style.setProperty('--ac', g.accent);
+    el.dataset.tag = g.tag;
+    el.innerHTML = '<span class="gcard-icon" style="color:'+g.accent+';font-size:1.2rem;font-weight:900;font-family:Courier New,monospace">'+g.icon+'</span>' +
+      '<div class="gcard-name" style="color:#e8e8f0">'+g.name+'</div>' +
+      (g.tag==='unique'?'<div class="gcard-badge">&#9733; UNIQUE</div>':'') +
+      (g.tag==='puzzle'?'<div class="gcard-badge">&#9734; PUZZLE</div>':'');
+    if (g.tag==='unique') ug.appendChild(el);
+    else if (g.tag==='puzzle') pg.appendChild(el);
+    else cg.appendChild(el);
+  });
+
+  var nav = document.getElementById('nav');
+  [['all','ALL'],['classic','CLASSIC'],['puzzle','PUZZLE'],['unique','UNIQUE']].forEach(function(pair, i) {
+    var b = document.createElement('button');
+    b.className = 'nBtn' + (i===0?' on':'');
+    b.textContent = pair[1];
+    b.addEventListener('click', function() {
+      document.querySelectorAll('.nBtn').forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      document.querySelectorAll('.gcard').forEach(function(c) {
+        c.style.display = (pair[0]==='all' || c.dataset.tag===pair[0]) ? '' : 'none';
+      });
+      document.querySelectorAll('.sec-title').forEach(function(t) {
+        t.style.display = pair[0]==='all' ? '' : 'none';
+      });
+    });
+    nav.appendChild(b);
+  });
+}
+
+buildHub();
+</script>
+<script src="shared/core.js"></script>
+</body>
+</html>

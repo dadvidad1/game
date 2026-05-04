@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON FLAP - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">NEON FLAP</div>
+        <div id="gs-desc">Tap/Space to flap. Navigate through the neon pipes.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.flappy = function() {
+  var C=gc(); var wrap=el('div','wrap'); wrap.style.position='relative';
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="flSc">0</span>&nbsp;&nbsp;&nbsp;BEST: <span class="hv" id="flHi">0</span>'; wrap.appendChild(hud);
+  var cv=document.createElement('canvas'); cv.width=320; cv.height=480; cv.style.display='block'; cv.style.margin='0 auto'; wrap.appendChild(cv);
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','NEON FLAP'); ov.appendChild(ovT); 
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb); wrap.appendChild(ov); C.appendChild(wrap);
+  
+  var ctx=cv.getContext('2d');
+  
+  var bird={x:50,y:240,w:20,h:20,v:0,g:0.25,j:-5},pipes=[],score=0,hi=0,running=false;
+
+  function spawn(){ 
+    var gaps = [160, 120, 90];
+    var gap = gaps[diff];
+    var h=50+Math.random()*(cv.height-gap-100); 
+    pipes.push({x:cv.width,y:h,w:50,g:gap,passed:false}); 
+  }
+  function flap(){ if(running) bird.v=bird.j; }
+
+  sb.addEventListener('click',function(){ score=0; pipes=[]; bird.y=240; bird.v=0; running=true; ov.style.display='none'; spawn(); document.getElementById('flSc').textContent=0; });
+  addKey(function(e){ if(e.code==='Space'||e.key==='ArrowUp') flap(); });
+  cv.addEventListener('touchstart',function(e){ e.preventDefault(); flap(); });
+
+  addLoop(function(){
+    if(!running) return;
+    bird.v+=bird.g; bird.y+=bird.v;
+    if(bird.y<0||bird.y+bird.h>cv.height){ running=false; }
+    
+    pipes.forEach(function(p,i){
+      p.x-=2;
+      if(bird.x<p.x+p.w && bird.x+bird.w>p.x && (bird.y<p.y || bird.y+bird.h>p.y+p.g)) running=false;
+      if(!p.passed && p.x+p.w<bird.x){ p.passed=true; score++; document.getElementById('flSc').textContent=score; if(score%5===0) spawn(); }
+    });
+    if(pipes.length && pipes[pipes.length-1].x < cv.width-180) spawn();
+    pipes=pipes.filter(function(p){return p.x>-p.w;});
+
+    if(!running){ if(score>hi){hi=score; document.getElementById('flHi').textContent=hi;} ovT.textContent='GAME OVER'; sb.textContent='RESTART'; ov.style.display='flex'; }
+
+    ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.fillStyle='#ffe600'; ctx.shadowColor='#ffe600'; ctx.shadowBlur=10; ctx.fillRect(bird.x,bird.y,bird.w,bird.h);
+    ctx.fillStyle='#00f5ff'; ctx.shadowColor='#00f5ff';
+    pipes.forEach(function(p){ ctx.fillRect(p.x,0,p.w,p.y); ctx.fillRect(p.x,p.y+p.g,p.w,cv.height-(p.y+p.g)); });
+    ctx.shadowBlur=0;
+  }, 1000/60);
+};
+BUILDERS.flappy();
+    </script>
+</body>
+</html>

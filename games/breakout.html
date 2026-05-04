@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BREAKOUT - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">BREAKOUT</div>
+        <div id="gs-desc">Bounce the ball to break all the neon bricks.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.breakout = function() {
+  var C=gc(); var wrap=el('div','wrap'); wrap.style.position='relative';
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="brSc">0</span>&nbsp;&nbsp;&nbsp;USE MOUSE / TOUCH'; wrap.appendChild(hud);
+  var cv=document.createElement('canvas'); cv.width=480; cv.height=320; cv.style.width='100%'; cv.style.display='block'; wrap.appendChild(cv);
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','BREAKOUT'); ov.appendChild(ovT); 
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb); wrap.appendChild(ov); C.appendChild(wrap);
+  
+  var ctx=cv.getContext('2d');
+
+  var paddle={x:200,w:75,h:10},ball={x:240,y:300,vx:3,vy:-3,r:6},bricks=[],running=false,score=0;
+
+  function initBricks(){
+    bricks=[]; for(var r=0;r<4;r++) for(var c=0;c<7;c++) bricks.push({x:c*60+35,y:r*25+40,w:50,h:15,v:true,c:'hsl('+(r*40)+',100%,60%)'});
+  }
+
+  cv.addEventListener('mousemove',function(e){ var r=cv.getBoundingClientRect(); paddle.x=(e.clientX-r.left)*(cv.width/r.width)-paddle.w/2; });
+  cv.addEventListener('touchmove',function(e){ e.preventDefault(); var r=cv.getBoundingClientRect(); paddle.x=(e.touches[0].clientX-r.left)*(cv.width/r.width)-paddle.w/2; },{passive:false});
+
+  sb.addEventListener('click',function(){ 
+    initBricks(); score=0; 
+    var ballSpds = [2.2, 3, 4.5];
+    var s = ballSpds[diff];
+    ball={x:240,y:300,vx:s,vy:-s,r:6}; 
+    running=true; ov.style.display='none'; document.getElementById('brSc').textContent=0; 
+  });
+
+  addLoop(function(){
+    if(!running)return;
+    ball.x+=ball.vx; ball.y+=ball.vy;
+    if(ball.x<ball.r||ball.x>cv.width-ball.r) ball.vx*=-1;
+    if(ball.y<ball.r) ball.vy*=-1;
+    if(ball.y>cv.height-ball.r){
+      if(ball.x>paddle.x&&ball.x<paddle.x+paddle.w){ ball.vy=-Math.abs(ball.vy); ball.vx+=(ball.x-(paddle.x+paddle.w/2))*0.1; }
+      else { running=false; ovT.textContent='GAME OVER'; sb.textContent='RESTART'; ov.style.display='flex'; }
+    }
+    bricks.forEach(function(b){
+      if(b.v && ball.x>b.x && ball.x<b.x+b.w && ball.y>b.y && ball.y<b.y+b.h){ b.v=false; ball.vy*=-1; score+=10; document.getElementById('brSc').textContent=score; }
+    });
+    if(bricks.every(function(b){return !b.v;})){ running=false; ovT.textContent='YOU WIN!'; sb.textContent='PLAY AGAIN'; ov.style.display='flex'; }
+
+    ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.fillStyle='var(--cyan)'; ctx.shadowBlur=10; ctx.shadowColor='var(--cyan)'; ctx.fillRect(paddle.x,cv.height-paddle.h-5,paddle.w,paddle.h);
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fill();
+    bricks.forEach(function(b){ if(b.v){ctx.fillStyle=b.c;ctx.shadowColor=b.c;ctx.fillRect(b.x,b.y,b.w,b.h);} });
+    ctx.shadowBlur=0;
+  }, 1000/60);
+};
+BUILDERS.breakout();
+    </script>
+</body>
+</html>

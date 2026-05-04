@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVADERS - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">INVADERS</div>
+        <div id="gs-desc">Arrow keys to move, Space to shoot.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.invaders = function() {
+  var C=gc(); var wrap=el('div','wrap'); wrap.style.position='relative';
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="siSc">0</span>&nbsp;&nbsp;&nbsp;LIVES: <span class="hv" id="siLi">3</span>'; wrap.appendChild(hud);
+  var cv=document.createElement('canvas'); cv.width=400; cv.height=500; cv.style.width='100%'; cv.style.maxWidth='400px'; cv.style.margin='0 auto'; cv.style.display='block'; wrap.appendChild(cv);
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','INVADERS'); ov.appendChild(ovT); 
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb); wrap.appendChild(ov); C.appendChild(wrap);
+  
+  var ctx=cv.getContext('2d');
+  var ship={x:185,y:460,w:30,h:20},bullets=[],enemies=[],score=0,lives=3,running=false,dir=1,tick=0;
+
+  function spawn(){
+    enemies=[]; for(var r=0;r<4;r++) for(var c=0;c<8;c++) enemies.push({x:c*40+40,y:r*30+50,w:25,h:20});
+  }
+  function shoot(){ bullets.push({x:ship.x+13,y:ship.y,w:4,h:10}); }
+
+  sb.addEventListener('click',function(){ score=0; lives=3; running=true; ov.style.display='none'; spawn(); document.getElementById('siSc').textContent=0; document.getElementById('siLi').textContent=3; });
+  var keys={};
+  addKey(function(e){ keys[e.code]=true; if(e.code==='Space' && running) shoot(); });
+  document.addEventListener('keyup', function(e){ keys[e.code]=false; });
+  stopFns.push(function(){ document.removeEventListener('keyup', function(e){ keys[e.code]=false; }); });
+
+  mkTControls(C, [
+    {icon:'&larr;', fn:function(){if(running)ship.x=Math.max(0,ship.x-15);}},
+    {icon:'FIRE', fn:function(){if(running)shoot();}},
+    {icon:'&rarr;', fn:function(){if(running)ship.x=Math.min(370,ship.x+15);}}
+  ]);
+
+  addLoop(function(){
+    if(!running) return;
+    if(keys['ArrowLeft']) ship.x=Math.max(0,ship.x-5);
+    if(keys['ArrowRight']) ship.x=Math.min(370,ship.x+5);
+    
+    bullets.forEach(function(b,bi){
+      b.y-=7;
+      enemies.forEach(function(e,ei){
+        if(b.x<e.x+e.w && b.x+b.w>e.x && b.y<e.y+e.h && b.y+b.h>e.y){
+          bullets.splice(bi,1); enemies.splice(ei,1); score+=10; document.getElementById('siSc').textContent=score;
+        }
+      });
+    });
+    bullets=bullets.filter(function(b){return b.y>-10;});
+
+    tick++;
+    var speeds = [45, 30, 15];
+    if(tick%speeds[diff]===0){
+      var edge=false; enemies.forEach(function(e){ e.x+=dir*10; if(e.x>370||e.x<5) edge=true; });
+      if(edge){ dir*=-1; enemies.forEach(function(e){ e.y+=20; if(e.y>ship.y-20){lives=0;} }); }
+    }
+    if(!enemies.length) spawn();
+    if(lives<=0){ running=false; ovT.textContent='GAME OVER'; sb.textContent='RESTART'; ov.style.display='flex'; }
+
+    ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,400,500);
+    ctx.fillStyle='#00f5ff'; ctx.fillRect(ship.x,ship.y,ship.w,ship.h);
+    ctx.fillStyle='#ff006e'; enemies.forEach(function(e){ ctx.fillRect(e.x,e.y,e.w,e.h); });
+    ctx.fillStyle='#ffe600'; bullets.forEach(function(b){ ctx.fillRect(b.x,b.y,b.w,b.h); });
+  }, 1000/60);
+};
+BUILDERS.invaders();
+    </script>
+</body>
+</html>

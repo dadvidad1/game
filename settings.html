@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SETTINGS - NEON ARCADE</title>
+    <link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+    <header>
+        <h1>SETTINGS</h1>
+        <div class="sub">// CUSTOMIZE YOUR ARCADE EXPERIENCE //</div>
+    </header>
+
+    <div id="gs">
+        <a href="index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        
+        <div class="settings-grid">
+            <div class="setting-item">
+                <div style="font-size:.8rem;font-weight:900;letter-spacing:.1em">ARCADE THEME</div>
+                <div style="font-size:.65rem;color:#6b6b80;margin-top:4px">Select the visual style for the entire arcade.</div>
+                
+                <div class="theme-opts" id="themeOpts">
+                    <div class="t-opt" data-theme="midnight">MIDNIGHT</div>
+                    <div class="t-opt" data-theme="matrix">MATRIX</div>
+                    <div class="t-opt" data-theme="retro">RETRO</div>
+                    <div class="t-opt" data-theme="light">LIGHT</div>
+                    <div class="t-opt" data-theme="woodland">WOODLAND</div>
+                    <div class="t-opt" data-theme="cyber">CYBERPUNK</div>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div style="font-size:.8rem;font-weight:900;letter-spacing:.1em">ARCADE LAYOUT</div>
+                <div style="font-size:.65rem;color:#6b6b80;margin-top:4px">Choose how the games are presented in the hub.</div>
+                
+                <div class="theme-opts" id="uiOpts">
+                    <div class="t-opt" data-ui="modern">GRID (DEFAULT)</div>
+                    <div class="t-opt" data-ui="classic">LIST (COMPACT)</div>
+                    <div class="t-opt" data-ui="glass">CAROUSEL (FOCUS)</div>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div style="font-size:.8rem;font-weight:900;letter-spacing:.1em">DEFAULT DIFFICULTY</div>
+                <div style="font-size:.65rem;color:#6b6b80;margin-top:4px">Set your preferred challenge level for all games.</div>
+                <div class="diff-wrap" id="globalDiff" style="margin-top:12px">
+                    <button class="diff-btn" data-d="0">EASY</button>
+                    <button class="diff-btn" data-d="1">NORMAL</button>
+                    <button class="diff-btn" data-d="2">HARD</button>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div style="font-size:.8rem;font-weight:900;letter-spacing:.1em">DATA MANAGEMENT</div>
+                <div style="font-size:.65rem;color:#6b6b80;margin-top:4px">Reset your high scores and preferences.</div>
+                <button class="btn d" style="width:100%;margin-top:12px" onclick="if(confirm('Reset all arcade data?')) { localStorage.clear(); location.reload(); }">WIPE ALL DATA</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared/core.js"></script>
+    <script>
+        var opts = document.querySelectorAll('.t-opt');
+        var cur = localStorage.getItem('arcade-theme') || 'midnight';
+        
+        function updateUI(theme) {
+            opts.forEach(function(o) {
+                o.classList.toggle('active', o.dataset.theme === theme);
+            });
+        }
+
+        opts.forEach(function(o) {
+            o.addEventListener('click', function() {
+                var theme = o.dataset.theme;
+                localStorage.setItem('arcade-theme', theme);
+                applyTheme();
+                updateUI(theme);
+            });
+        });
+
+        updateUI(cur);
+
+        // UI Design logic
+        var uiOpts = document.querySelectorAll('#uiOpts .t-opt');
+        var curUI = localStorage.getItem('arcade-ui') || 'modern';
+
+        function updateUIOpt(ui) {
+            uiOpts.forEach(function(o) {
+                o.classList.toggle('active', o.dataset.ui === ui);
+            });
+        }
+
+        uiOpts.forEach(function(o) {
+            o.addEventListener('click', function() {
+                var ui = o.dataset.ui;
+                localStorage.setItem('arcade-ui', ui);
+                applyTheme(); // applyTheme in core.js handles both theme and ui
+                updateUIOpt(ui);
+            });
+        });
+
+        updateUIOpt(curUI);
+
+        // Difficulty logic
+        var dBtns = document.querySelectorAll('.diff-btn');
+        var curD = localStorage.getItem('arcade-diff') || '1';
+        
+        function updateDiffUI(d) {
+            dBtns.forEach(function(b) {
+                b.classList.toggle('active', b.dataset.d === d);
+            });
+        }
+
+        dBtns.forEach(function(b) {
+            b.addEventListener('click', function() {
+                var d = b.dataset.d;
+                localStorage.setItem('arcade-diff', d);
+                updateDiffUI(d);
+            });
+        });
+
+        updateDiffUI(curD);
+    </script>
+</body>
+</html>

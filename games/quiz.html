@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRIVIA QUIZ - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">TRIVIA QUIZ</div>
+        <div id="gs-desc">10 trivia questions. How many can you get right?</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.quiz = function() {
+  var QS=[
+    {q:"What is the capital of Japan?",a:"Tokyo",o:["Tokyo","Beijing","Seoul","Bangkok"]},
+    {q:"How many planets are in our solar system?",a:"8",o:["7","8","9","10"]},
+    {q:"Who painted the Mona Lisa?",a:"Leonardo da Vinci",o:["Michelangelo","Leonardo da Vinci","Raphael","Botticelli"]},
+    {q:"What is the chemical symbol for gold?",a:"Au",o:["Go","Gd","Au","Ag"]},
+    {q:"Which is the largest ocean?",a:"Pacific",o:["Atlantic","Indian","Pacific","Arctic"]},
+    {q:"In what year did WW2 end?",a:"1945",o:["1942","1943","1944","1945"]},
+    {q:"What is the fastest land animal?",a:"Cheetah",o:["Lion","Cheetah","Horse","Leopard"]},
+    {q:"How many sides does a hexagon have?",a:"6",o:["5","6","7","8"]},
+    {q:"What language has the most native speakers?",a:"Mandarin",o:["English","Spanish","Mandarin","Hindi"]},
+    {q:"What is the square root of 144?",a:"12",o:["10","11","12","14"]}
+  ].sort(function(){return Math.random()-0.5;});
+
+  var idx=0,score=0,answered=false;
+  var C=gc();
+  var wrap=el('div','wrap');
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','TRIVIA QUIZ'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+
+  var hud=el('div','hud'); hud.innerHTML='Q <span class="hv" id="qi">1</span>/10&nbsp;&nbsp;&nbsp;SCORE: <span class="hv" id="qs">0</span>'; wrap.appendChild(hud);
+
+  var barWrap=el('div',''); barWrap.style.cssText='padding:.4rem 1rem 0'; var bar=el('div','qbar'); var fill=el('div','qfill'); fill.id='qf'; fill.style.width='0%'; bar.appendChild(fill); barWrap.appendChild(bar); wrap.appendChild(barWrap);
+  var body=el('div','qwrap'); body.id='qbody'; wrap.appendChild(body);
+  C.appendChild(wrap);
+
+  sb.addEventListener('click', function(){ ov.style.display='none'; });
+
+  function render(){
+    if(idx>=QS.length){
+      body.innerHTML='<div style="text-align:center;padding:2rem"><div style="font-size:1.4rem;font-weight:900;letter-spacing:.08em;color:var(--cyan)">QUIZ COMPLETE</div><div style="font-size:3rem;font-weight:900;color:var(--yellow);margin:1rem">'+score+'/10</div></div>';
+      var rb=mkBtn('PLAY AGAIN','p'); rb.style.margin='0 auto'; rb.style.display='block';
+      rb.addEventListener('click',function(){ stopAll(); gc().innerHTML=''; BUILDERS.quiz(); });
+      body.appendChild(rb); return;
+    }
+    answered=false;
+    document.getElementById('qi').textContent=idx+1;
+    document.getElementById('qf').style.width=((idx/10)*100)+'%';
+    var q=QS[idx];
+    var opts=q.o.slice().sort(function(){return Math.random()-0.5;});
+    var html='<div class="qq">'+q.q+'</div><div class="qopts">';
+    opts.forEach(function(o){ html+='<button class="qopt" data-ans="'+o+'">'+o+'</button>'; });
+    html+='</div><div class="msg" id="qmsg"></div>';
+    body.innerHTML=html;
+    body.querySelectorAll('.qopt').forEach(function(b){
+      b.addEventListener('click',function(){
+        if(answered)return; answered=true;
+        var pick=b.dataset.ans;
+        body.querySelectorAll('.qopt').forEach(function(x){
+          x.disabled=true;
+          if(x.dataset.ans===q.a) x.className='qopt ok';
+          else if(x.dataset.ans===pick&&pick!==q.a) x.className='qopt no';
+        });
+        if(pick===q.a){
+          var pts = [10, 20, 50][diff];
+          score+=pts; document.getElementById('qs').textContent=score;
+        } else {
+          var penalty = [0, 5, 20][diff];
+          score = Math.max(0, score - penalty);
+          document.getElementById('qs').textContent=score;
+        }
+        setTimeout(function(){ idx++; render(); },1000);
+      });
+    });
+  }
+  render();
+};
+BUILDERS.quiz();
+    </script>
+</body>
+</html>

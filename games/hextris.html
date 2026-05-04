@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEX GLOW - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">HEX GLOW</div>
+        <div id="gs-desc">Rotate the hexagon to match incoming colors.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.hextris = function() {
+  var C=gc(); var wrap=el('div','wrap'); wrap.style.position='relative';
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="hxSc">0</span>&nbsp;&nbsp;&nbsp;USE ARROWS TO ROTATE'; wrap.appendChild(hud);
+  var cv=document.createElement('canvas'); cv.width=400; cv.height=400; cv.style.width='100%'; cv.style.display='block'; wrap.appendChild(cv);
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','HEX GLOW'); ov.appendChild(ovT); 
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb); wrap.appendChild(ov); C.appendChild(wrap);
+  
+  var ctx=cv.getContext('2d');
+
+  var rot=0,blocks=[],score=0,running=false,colors=['#ff006e','#00f5ff','#39ff14','#ffe600','#bf5af2','#ff9500'];
+
+  function spawn(){ var c=Math.floor(Math.random()*6); blocks.push({dist:250,side:Math.floor(Math.random()*6),c:colors[c]}); }
+
+  sb.addEventListener('click',function(){ rot=0; blocks=[]; score=0; running=true; ov.style.display='none'; spawn(); document.getElementById('hxSc').textContent=0; });
+  addKey(function(e){ if(e.key==='ArrowLeft')rot-=60; if(e.key==='ArrowRight')rot+=60; });
+  cv.addEventListener('touchstart',function(e){ e.preventDefault(); var x=e.touches[0].clientX; if(x<window.innerWidth/2)rot-=60; else rot+=60; });
+
+  addLoop(function(){
+    if(!running)return;
+    var spawnProb = [0.01, 0.02, 0.035][diff];
+    if(Math.random()<spawnProb)spawn();
+    blocks.forEach(function(b,i){
+      var fallSpd = [1.2, 2.0, 3.2][diff];
+      b.dist-=fallSpd;
+      if(b.dist<40){
+        var normalizedRot = ((rot % 360) + 360) % 360;
+        var side = (b.side + Math.round(normalizedRot/60)) % 6;
+        if(side===0){ score+=10; document.getElementById('hxSc').textContent=score; blocks.splice(i,1); }
+        else { running=false; ovT.textContent='GAME OVER'; sb.textContent='RESTART'; ov.style.display='flex'; }
+      }
+    });
+
+    ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,400,400);
+    ctx.translate(200,200); ctx.rotate(rot*Math.PI/180);
+    for(var i=0;i<6;i++){
+      ctx.strokeStyle=colors[i]; ctx.lineWidth=4; ctx.beginPath();
+      var a1=i*Math.PI/3, a2=(i+1)*Math.PI/3;
+      ctx.moveTo(Math.cos(a1)*40,Math.sin(a1)*40); ctx.lineTo(Math.cos(a2)*40,Math.sin(a2)*40); ctx.stroke();
+    }
+    ctx.rotate(-rot*Math.PI/180);
+    blocks.forEach(function(b){
+      var a1=(b.side)*Math.PI/3, a2=(b.side+1)*Math.PI/3;
+      ctx.fillStyle=b.c; ctx.beginPath();
+      ctx.moveTo(Math.cos(a1)*b.dist,Math.sin(a1)*b.dist); ctx.lineTo(Math.cos(a2)*b.dist,Math.sin(a2)*b.dist);
+      ctx.lineTo(Math.cos(a2)*(b.dist+10),Math.sin(a2)*(b.dist+10)); ctx.lineTo(Math.cos(a1)*(b.dist+10),Math.sin(a1)*(b.dist+10));
+      ctx.fill();
+    });
+    ctx.setTransform(1,0,0,1,0,0);
+  }, 1000/60);
+};
+BUILDERS.hextris();
+    </script>
+</body>
+</html>

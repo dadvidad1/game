@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINESWEEPER - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">MINESWEEPER</div>
+        <div id="gs-desc">Left-click to reveal, right-click to flag mines.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.mine = function() {
+  var C=gc();
+  var wrap=el('div','wrap');
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','MINESWEEPER'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ stopAll(); gc().innerHTML=''; BUILDERS.mine(); });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+
+  var R = [8, 10, 12][diff];
+  var CO = [8, 10, 12][diff];
+  var MINES = [10, 15, 25][diff];
+  
+  var board,revealed,flagged,over,firstClick;
+
+  var hud=el('div','hud'); hud.innerHTML='MINES: <span class="hv" id="msCnt">'+MINES+'</span>&nbsp;&nbsp;&nbsp;Right-click to flag&nbsp;&nbsp;&nbsp;<span id="msMsg">Click to start</span>'; wrap.appendChild(hud);
+  var grid=el('div',''); grid.id='mineGrid'; grid.style.cssText='display:grid;grid-template-columns:repeat('+CO+',1fr);gap:3px;padding:.8rem';
+  wrap.appendChild(grid);
+  var msgEl=el('div','msg'); wrap.appendChild(msgEl);
+  C.appendChild(wrap);
+
+  sb.addEventListener('click', function(){ ov.style.display='none'; });
+
+  var NUMCOL=['','#00f5ff','#39ff14','#ff006e','#bf5af2','#ffe600','#ff9500','#ff375f','#fff'];
+
+  function nbrs(i){ var row=Math.floor(i/CO),col=i%CO,n=[]; [-1,0,1].forEach(function(dr){[-1,0,1].forEach(function(dc){ if(!dr&&!dc)return; var nr=row+dr,nc=col+dc; if(nr>=0&&nr<R&&nc>=0&&nc<CO)n.push(nr*CO+nc); })}); return n; }
+
+  function init(safe){
+    board=new Array(R*CO).fill(0); revealed=new Array(R*CO).fill(false); flagged=new Array(R*CO).fill(false);
+    over=false; var placed=0;
+    while(placed<MINES){ var idx=Math.floor(Math.random()*R*CO); if(idx!==safe&&board[idx]!=-1){board[idx]=-1;placed++;} }
+    for(var i=0;i<R*CO;i++){ if(board[i]===-1)continue; var cnt=0; nbrs(i).forEach(function(n){if(board[n]===-1)cnt++;}); board[i]=cnt; }
+  }
+
+  function reveal(i){ if(revealed[i]||flagged[i])return; revealed[i]=true; if(board[i]===0)nbrs(i).forEach(reveal); }
+
+  function render(){
+    grid.innerHTML='';
+    for(var i=0;i<R*CO;i++){
+      (function(idx){
+        var c=document.createElement('button');
+        c.style.cssText='aspect-ratio:1;border:1px solid var(--border);border-radius:4px;font-size:.65rem;cursor:pointer;font-family:Courier New,monospace;font-weight:700;background:var(--card);color:#e8e8f0;padding:0';
+        if(flagged[idx]&&!revealed[idx]){ c.textContent='F'; c.style.color='var(--pink)'; }
+        else if(!revealed[idx]){ c.style.background='var(--card)'; }
+        else if(board[idx]===-1){ c.textContent='X'; c.style.background='rgba(255,0,110,0.3)'; c.style.color='var(--pink)'; }
+        else{ c.style.background='var(--surface)'; if(board[idx]>0){c.textContent=board[idx];c.style.color=NUMCOL[board[idx]];} }
+        c.addEventListener('click',function(){
+          if(over||flagged[idx])return;
+          if(firstClick){ firstClick=false; init(idx); reveal(idx); }
+          else if(!revealed[idx]){ reveal(idx); }
+          if(board[idx]===-1){ revealed[idx]=true; over=true; document.getElementById('msMsg').textContent='BOOM! Game Over'; for(var j=0;j<R*CO;j++)if(board[j]===-1)revealed[j]=true; }
+          var won=board.every(function(v,j){ return v===-1||revealed[j]; });
+          if(won){over=true;document.getElementById('msMsg').textContent='YOU WIN!';}
+          if(over && !msgEl.innerHTML){
+            var rb=mkBtn('PLAY AGAIN','p');
+            rb.addEventListener('click',function(){ stopAll(); gc().innerHTML=''; BUILDERS.mine(); });
+            msgEl.appendChild(rb);
+          }
+          render();
+        });
+        c.addEventListener('contextmenu',function(e){ e.preventDefault(); if(revealed[idx])return; flagged[idx]=!flagged[idx]; var fl=flagged.filter(Boolean).length; document.getElementById('msCnt').textContent=MINES-fl; render(); });
+        grid.appendChild(c);
+      })(i);
+    }
+  }
+
+  board=new Array(R*CO).fill(0); revealed=new Array(R*CO).fill(false); flagged=new Array(R*CO).fill(false); over=false; firstClick=true;
+  render();
+};
+BUILDERS.mine();
+    </script>
+</body>
+</html>

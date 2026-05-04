@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEMORY - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">MEMORY</div>
+        <div id="gs-desc">Flip cards and match all pairs.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.memory = function() {
+  var EMOJIS=['&#127918;','&#128640;','&#11088;','&#127919;','&#128142;','&#128293;','&#127769;','&#127914;','&#129418;','&#127981;','&#127754;','&#127928;','&#128163;','&#128126;','&#127828;','&#127814;','&#127825;','&#127827;'];
+  
+  var C=gc();
+  var wrap=el('div','wrap');
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','MEMORY'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ stopAll(); gc().innerHTML=''; BUILDERS.memory(); });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+
+  var numPairs = [6, 12, 18][diff];
+  var subEmojis = EMOJIS.slice(0, numPairs);
+  var cards = subEmojis.concat(subEmojis).sort(function(){return Math.random()-0.5;});
+  var flipped=[],matched=[],moves=0,pairs=0,canFlip=true;
+
+  var hud=el('div','hud'); hud.innerHTML='MOVES: <span class="hv" id="mmMv">0</span>&nbsp;&nbsp;&nbsp;PAIRS: <span class="hv" id="mmPr">0</span>/'+numPairs; wrap.appendChild(hud);
+  var grid=el('div','mgrid'); grid.id='mgrid'; 
+  var cols = [4, 6, 6][diff];
+  grid.style.gridTemplateColumns='repeat('+cols+',1fr)'; 
+  wrap.appendChild(grid);
+  var msg=el('div','msg'); wrap.appendChild(msg);
+  C.appendChild(wrap);
+
+  sb.addEventListener('click', function(){ ov.style.display='none'; });
+
+  cards.forEach(function(em,i){
+    var c=el('div','mcard');
+    c.dataset.em=em; c.dataset.idx=i;
+    c.addEventListener('click',function(){
+      if(!canFlip||flipped.indexOf(i)!==-1||matched.indexOf(i)!==-1)return;
+      c.innerHTML=em; c.classList.add('flip');
+      flipped.push(i);
+      if(flipped.length===2){
+        moves++; document.getElementById('mmMv').textContent=moves; canFlip=false;
+        var a=flipped[0],b=flipped[1];
+        var ca=grid.children[a],cb=grid.children[b];
+        if(cards[a]===cards[b]){
+          matched.push(a,b); ca.classList.add('match'); cb.classList.add('match');
+          pairs++; document.getElementById('mmPr').textContent=pairs;
+          if(pairs===numPairs) {
+            msg.textContent='Complete in '+moves+' moves!';
+            var rb=mkBtn('PLAY AGAIN','p'); rb.style.margin='0 auto'; rb.style.display='block';
+            rb.addEventListener('click',function(){ stopAll(); gc().innerHTML=''; BUILDERS.memory(); });
+            wrap.appendChild(rb);
+          }
+          flipped=[]; canFlip=true;
+        } else {
+          setTimeout(function(){
+            ca.innerHTML=''; ca.classList.remove('flip');
+            cb.innerHTML=''; cb.classList.remove('flip');
+            flipped=[]; canFlip=true;
+          },800);
+        }
+      }
+    });
+    grid.appendChild(c);
+  });
+};
+BUILDERS.memory();
+    </script>
+</body>
+</html>

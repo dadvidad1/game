@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TYPE RACER - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">TYPE RACER</div>
+        <div id="gs-desc">Type the word shown before time runs out!</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.typer = function() {
+  var WORDS=['neon','pixel','cipher','vector','binary','cosmic','surge','flux','pulse','rapid','swift','blaze','alpha','omega','delta','echo','helix','matrix','orbit','prism','sonic','turbo','qubit','laser','phase','shift','boost','glide','crypt','storm'];
+  var C=gc();
+  var wrap=el('div','wrap');
+  var diff = mkDifficulty(wrap, function(d){ diff = d; });
+
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="trSc">0</span>&nbsp;&nbsp;&nbsp;TIME: <span class="hv" id="trT">30</span>s&nbsp;&nbsp;&nbsp;WPM: <span class="hv" id="trW">0</span>'; wrap.appendChild(hud);
+  var wordDiv=el('div','tword'); wordDiv.id='trWord'; wordDiv.textContent='READY?'; wrap.appendChild(wordDiv);
+  var barWrap=el('div','timebar'); var fill=el('div','timefill'); fill.id='trFill'; fill.style.width='100%'; barWrap.appendChild(fill); wrap.appendChild(barWrap);
+  var inp=el('input','tinput'); inp.id='trInp'; inp.setAttribute('autocomplete','off'); inp.setAttribute('autocorrect','off'); inp.setAttribute('spellcheck','false'); inp.placeholder='TYPE HERE'; inp.disabled=true; inp.style.display='block'; inp.style.margin='.8rem auto'; wrap.appendChild(inp);
+  var sub=el('div','msg'); sub.id='trSub'; sub.textContent='Press START'; wrap.appendChild(sub);
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','TYPE RACER'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+  C.appendChild(wrap);
+
+  var score=0,timeLeft=30,running=false,pool=[],timerId;
+
+  function shuffle(){ 
+    var filtered = WORDS.filter(function(w){
+      if(diff === 0) return w.length <= 5;
+      if(diff === 2) return w.length >= 6;
+      return true;
+    });
+    pool=filtered.slice().sort(function(){return Math.random()-0.5;}); 
+  }
+  function nextWord(){ if(!pool.length)shuffle(); var w=pool.pop(); document.getElementById('trWord').textContent=w.toUpperCase(); inp.value=''; inp.focus(); }
+
+  sb.addEventListener('click',function(){
+    shuffle(); score=0; 
+    var baseTime = [40, 30, 20][diff];
+    timeLeft=baseTime; running=true;
+    document.getElementById('trSc').textContent=0; document.getElementById('trW').textContent=0;
+    document.getElementById('trT').textContent=timeLeft; document.getElementById('trFill').style.width='100%';
+    document.getElementById('trSub').textContent='Type the word!';
+    inp.disabled=false; ov.style.display='none';
+    nextWord();
+    var tId=setInterval(function(){
+      timeLeft--; document.getElementById('trT').textContent=timeLeft;
+      document.getElementById('trFill').style.width=((timeLeft/baseTime)*100)+'%';
+      if(timeLeft<=0){
+        clearInterval(tId); running=false; inp.disabled=true;
+        ovT.textContent='TIME!';
+        ov.style.display='flex';
+        sb.textContent='PLAY AGAIN';
+      }
+    },1000);
+    stopFns.push(function(){ clearInterval(tId); });
+  });
+
+  inp.addEventListener('input',function(){
+    if(!running)return;
+    var typed=inp.value.trim().toLowerCase();
+    var target=document.getElementById('trWord').textContent.toLowerCase();
+    if(typed===target){ score++; var wpm=Math.round(score*2); document.getElementById('trSc').textContent=score; document.getElementById('trW').textContent=wpm; nextWord(); }
+  });
+};
+BUILDERS.typer();
+    </script>
+</body>
+</html>

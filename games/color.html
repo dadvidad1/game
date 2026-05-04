@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COLOR MATCH - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">COLOR MATCH</div>
+        <div id="gs-desc">Mix RGB sliders to match the target color.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.color = function() {
+  var target,score=0,rounds=0,totalDiff=0;
+
+  var C=gc();
+  var wrap=el('div','wrap');
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="cmSc">0</span>&nbsp;&nbsp;&nbsp;ROUND: <span class="hv" id="cmR">0</span>&nbsp;&nbsp;&nbsp;AVG ERR: <span class="hv" id="cmE">-</span>'; wrap.appendChild(hud);
+  var circles=el('div','circles');
+  var tDiv=el('div',''); tDiv.style.textAlign='center'; var tLbl=el('div',''); tLbl.style.cssText='font-size:.6rem;letter-spacing:.2em;color:#6b6b80;margin-bottom:.4rem'; tLbl.textContent='TARGET'; var tCirc=el('div','circle'); tCirc.id='cmT'; tDiv.appendChild(tLbl); tDiv.appendChild(tCirc); circles.appendChild(tDiv);
+  var vs=el('div',''); vs.style.cssText='font-size:1.2rem;color:#6b6b80'; vs.textContent='VS'; circles.appendChild(vs);
+  var uDiv=el('div',''); uDiv.style.textAlign='center'; var uLbl=el('div',''); uLbl.style.cssText='font-size:.6rem;letter-spacing:.2em;color:#6b6b80;margin-bottom:.4rem'; uLbl.textContent='YOURS'; var uCirc=el('div','circle'); uCirc.id='cmU'; uDiv.appendChild(uLbl); uDiv.appendChild(uCirc); circles.appendChild(uDiv);
+  wrap.appendChild(circles);
+
+  var sliders=el('div','sliders');
+  function mkSlider(id,label,cls){
+    var row=el('div','srow'); var lbl=el('label',cls); lbl.textContent=label; var s=el('input',''); s.type='range'; s.min=0; s.max=255; s.value=128; s.id=id+'S'; var val=el('span',''); val.id=id+'V'; val.textContent='128'; row.appendChild(lbl); row.appendChild(s); row.appendChild(val); sliders.appendChild(row);
+  }
+  mkSlider('cmR','R','r'); mkSlider('cmG','G','g'); mkSlider('cmB','B','b');
+  wrap.appendChild(sliders);
+
+  var msg=el('div','msg'); msg.id='cmMsg'; wrap.appendChild(msg);
+  var cbar=el('div','cbar'); var sub=mkBtn('SUBMIT','p'); var nxt=mkBtn('NEW COLOR',''); cbar.appendChild(sub); cbar.appendChild(nxt); wrap.appendChild(cbar);
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','COLOR MATCH'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+  C.appendChild(wrap);
+
+  sb.addEventListener('click', function(){ ov.style.display='none'; });
+
+  function updateUser(){
+    var r=+document.getElementById('cmRS').value,g=+document.getElementById('cmGS').value,b=+document.getElementById('cmBS').value;
+    document.getElementById('cmU').style.background='rgb('+r+','+g+','+b+')';
+    document.getElementById('cmRV').textContent=r; document.getElementById('cmGV').textContent=g; document.getElementById('cmBV').textContent=b;
+  }
+  ['cmRS','cmGS','cmBS'].forEach(function(id){ document.getElementById(id).addEventListener('input',updateUser); });
+
+  function newTarget(){ target={r:Math.floor(Math.random()*256),g:Math.floor(Math.random()*256),b:Math.floor(Math.random()*256)}; document.getElementById('cmT').style.background='rgb('+target.r+','+target.g+','+target.b+')'; document.getElementById('cmMsg').textContent='Mix the sliders to match the target!'; }
+  function reset(){ ['cmRS','cmGS','cmBS'].forEach(function(id){document.getElementById(id).value=128;}); updateUser(); }
+
+  sub.addEventListener('click',function(){
+    var r=+document.getElementById('cmRS').value,g=+document.getElementById('cmGS').value,b=+document.getElementById('cmBS').value;
+    var dist=Math.round(Math.sqrt(((r-target.r)*(r-target.r)+(g-target.g)*(g-target.g)+(b-target.b)*(b-target.b))/3));
+    var threshold = [25, 15, 8][diff];
+    var pts=Math.max(0,100-dist); 
+    if(diff === 2) pts *= 1.5; // Bonus for hard
+    score+=Math.round(pts); rounds++; totalDiff+=dist;
+    document.getElementById('cmSc').textContent=score; document.getElementById('cmR').textContent=rounds; document.getElementById('cmE').textContent=Math.round(totalDiff/rounds);
+    document.getElementById('cmMsg').textContent='Diff: '+dist+' | +'+Math.round(pts)+' pts | '+(dist<threshold?'PERFECT!':dist<(threshold*2.5)?'CLOSE!':'Try again!');
+  });
+  nxt.addEventListener('click',function(){ newTarget(); reset(); });
+
+  newTarget(); updateUser();
+};
+BUILDERS.color();
+    </script>
+</body>
+</html>

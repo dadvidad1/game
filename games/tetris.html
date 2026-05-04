@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TETRIS - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">TETRIS</div>
+        <div id="gs-desc">Arrow keys to move/rotate. Fill rows to clear them.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.tetris = function() {
+  var C = gc();
+  var wrap = el('div','wrap'); wrap.style.position='relative';
+  var hud = el('div','hud');
+  hud.innerHTML = 'SCORE: <span class="hv" id="ttSc">0</span>&nbsp;&nbsp;&nbsp;LINES: <span class="hv" id="ttLn">0</span>&nbsp;&nbsp;&nbsp;ARROWS + UP=rotate';
+  wrap.appendChild(hud);
+  var cv=document.createElement('canvas'); cv.width=200; cv.height=400; cv.style.display='block'; cv.style.margin='0 auto'; wrap.appendChild(cv);
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title'); ovT.textContent='TETRIS'; ovT.style.color='#bf5af2'; ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb); wrap.appendChild(ov); C.appendChild(wrap);
+  
+  var ctx=cv.getContext('2d');
+  var COLS=10,ROWS=20,CS=20;
+  var SHAPES=[[[1,1,1,1]],[[1,1],[1,1]],[[1,1,1],[0,1,0]],[[1,1,1],[1,0,0]],[[1,1,1],[0,0,1]],[[1,1,0],[0,1,1]],[[0,1,1],[1,1,0]]];
+  var COLORS=['#00f5ff','#ff006e','#bf5af2','#ffe600','#39ff14','#ff9500','#ff375f'];
+  var board=newBoard(),cur=[[1]],curX=0,curY=0,curC=COLORS[0],score=0,lines=0,running=false;
+
+  function newBoard(){ return Array.from({length:ROWS},function(){ return new Array(COLS).fill(0); }); }
+  function hit(dx,dy,sh){ sh=sh||cur; return sh.some(function(row,ry){ return row.some(function(v,rx){ if(!v)return false; var nx=curX+rx+dx,ny=curY+ry+dy; return nx<0||nx>=COLS||ny>=ROWS||(ny>=0&&board[ny][nx]); }); }); }
+  function merge(){ cur.forEach(function(row,ry){ row.forEach(function(v,rx){ if(v) board[curY+ry][curX+rx]=curC; }); }); }
+  function clearLines(){ var n=0; for(var r=ROWS-1;r>=0;r--){ if(board[r].every(function(c){return c;})){ board.splice(r,1); board.unshift(new Array(COLS).fill(0)); n++; r++; } } if(n){lines+=n;score+=n*100*n;document.getElementById('ttSc').textContent=score;document.getElementById('ttLn').textContent=lines;} }
+  function spawn(){ var i=Math.floor(Math.random()*SHAPES.length); cur=SHAPES[i].map(function(r){return r.slice();}); curC=COLORS[i]; curX=Math.floor((COLS-cur[0].length)/2); curY=0; if(hit(0,0)){running=false;ovT.textContent='GAME OVER';sb.textContent='RESTART';ov.style.display='flex';} }
+  function rotate(){ var r=cur[0].map(function(_,i){return cur.map(function(row){return row[i];}).reverse();}); if(!hit(0,0,r))cur=r; }
+
+  function draw(){
+    ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,200,400);
+    if(!board) return;
+    board.forEach(function(row,ry){ row.forEach(function(c,rx){ if(c){ctx.fillStyle=c;ctx.shadowColor=c;ctx.shadowBlur=5;ctx.fillRect(rx*CS+1,ry*CS+1,CS-2,CS-2);ctx.shadowBlur=0;} }); });
+    if(running) cur.forEach(function(row,ry){ row.forEach(function(v,rx){ if(v){ctx.fillStyle=curC;ctx.shadowColor=curC;ctx.shadowBlur=8;ctx.fillRect((curX+rx)*CS+1,(curY+ry)*CS+1,CS-2,CS-2);ctx.shadowBlur=0;} }); });
+  }
+
+  function tick(){ if(!running){draw();return;} if(!hit(0,1))curY++;else{merge();clearLines();spawn();} draw(); }
+
+  addKey(function(e){
+    if(!running)return;
+    if(e.key==='ArrowLeft'&&!hit(-1,0))curX--;
+    else if(e.key==='ArrowRight'&&!hit(1,0))curX++;
+    else if(e.key==='ArrowDown'&&!hit(0,1))curY++;
+    else if(e.key==='ArrowUp')rotate();
+    draw();
+  });
+
+  sb.addEventListener('click',function(){ 
+    board=newBoard();score=0;lines=0;running=true;ov.style.display='none'; 
+    document.getElementById('ttSc').textContent=0; document.getElementById('ttLn').textContent=0; 
+    spawn();
+    stopAll();
+    var spd = [800, 500, 250][diff];
+    addLoop(tick, spd);
+  });
+  mkTControls(C, [
+    {icon:'&larr;', fn:function(){if(running&&!hit(-1,0))curX--; draw();}},
+    {icon:'&orarr;', fn:function(){if(running)rotate(); draw();}},
+    {icon:'&rarr;', fn:function(){if(running&&!hit(1,0))curX++; draw();}},
+    {icon:'&darr;', fn:function(){if(running&&!hit(0,1))curY++; draw();}, cls:'large'}
+  ]);
+  draw();
+};
+BUILDERS.tetris();
+    </script>
+</body>
+</html>

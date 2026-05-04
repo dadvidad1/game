@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIT SHIFT - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">BIT SHIFT</div>
+        <div id="gs-desc">Convert binary to decimal as fast as you can.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.binary = function() {
+  var C=gc(); var wrap=el('div','wrap');
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="biSc">0</span>&nbsp;&nbsp;&nbsp;TIME: <span class="hv" id="biT">30</span>s'; wrap.appendChild(hud);
+  var body=el('div',''); body.style.padding='1.5rem';
+  var binD=el('div',''); binD.style.cssText='font-size:3.5rem;font-weight:900;text-align:center;color:var(--cyan);letter-spacing:.2em;margin-bottom:1rem'; binD.id='biBin'; binD.textContent='00000000'; body.appendChild(binD);
+  var inp=el('input','tinput'); inp.type='number'; inp.placeholder='DECIMAL VALUE'; inp.style.display='block'; inp.style.margin='0 auto'; body.appendChild(inp);
+  var msg=el('div','msg'); msg.id='biMsg'; body.appendChild(msg);
+  wrap.appendChild(body);
+  
+  var ov=el('div','ov'); 
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','BIT SHIFT'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+  C.appendChild(wrap);
+
+  var score=0,timeLeft=30,running=false,target=0;
+
+  function next(){ 
+    var bits = [4, 8, 12][diff];
+    var max = Math.pow(2, bits);
+    target=Math.floor(Math.random()*max); 
+    document.getElementById('biBin').textContent=target.toString(2).padStart(bits,'0'); 
+    inp.value=''; inp.focus(); 
+  }
+
+  sb.addEventListener('click',function(){
+    score=0; timeLeft=30; running=true; ov.style.display='none';
+    document.getElementById('biSc').textContent=0;
+    var tId=setInterval(function(){
+      timeLeft--; document.getElementById('biT').textContent=timeLeft;
+      if(timeLeft<=0){ 
+        clearInterval(tId); running=false; 
+        ovT.textContent='TIME!';
+        ov.style.display='flex';
+        sb.textContent='RESTART';
+      }
+    },1000);
+    stopFns.push(function(){ clearInterval(tId); });
+    next();
+  });
+
+  inp.addEventListener('input',function(){
+    if(!running)return;
+    if(+inp.value===target){ score++; document.getElementById('biSc').textContent=score; next(); }
+  });
+};
+BUILDERS.binary();
+    </script>
+</body>
+</html>

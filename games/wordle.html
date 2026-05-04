@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORDLE - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">WORDLE</div>
+        <div id="gs-desc">Guess the 5-letter word in 6 tries.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.wordle = function() {
+  var WORDS=['CRANE','LIGHT','BLAZE','PIXEL','CYBER','GRACE','FROST','BRAVE','QUICK','STORM','FLAME','SPEED','PROBE','SHADE','DRIFT','SPARK','GLOBE','PIVOT','CLAMP','TRUNK'];
+  var answer = WORDS[Math.floor(Math.random()*WORDS.length)];
+  var curRow=0,curGuess='',over=false;
+  var keyState={};
+
+  var C=gc();
+  var wrap=el('div','wrap');
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','WORDLE'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ stopAll(); gc().innerHTML=''; BUILDERS.wordle(); });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+
+  var maxTries = [7, 6, 5][diff];
+  var grid=el('div','wgrid'); wrap.appendChild(grid);
+
+  // build grid
+  for(var r=0;r<maxTries;r++){
+    var row=el('div','wrow'); row.id='wr'+r;
+    for(var c=0;c<5;c++){
+      var cell=el('div','wcell'); cell.id='wc'+r+c; row.appendChild(cell);
+    }
+    grid.appendChild(row);
+  }
+
+  var KB=[['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['ENTER','Z','X','C','V','B','N','M','DEL']];
+  var wkb=el('div','wkb'); wrap.appendChild(wkb);
+  KB.forEach(function(row){
+    var r=el('div','wkbrow');
+    row.forEach(function(k){
+      var b=el('button','wkey'); b.textContent=k; b.id='wk_'+k;
+      b.style.minWidth=k.length>1?'52px':'32px';
+      b.addEventListener('click',function(){ handleKey(k); });
+      r.appendChild(b);
+    });
+    wkb.appendChild(r);
+  });
+
+  var msgEl=el('div','msg'); wrap.appendChild(msgEl);
+  C.appendChild(wrap);
+
+  sb.addEventListener('click', function(){ ov.style.display='none'; });
+
+  function handleKey(k){
+    if(over) return;
+    if(k==='DEL'||k==='Backspace'){ if(curGuess.length>0){curGuess=curGuess.slice(0,-1);updateRow();} }
+    else if(k==='ENTER'||k==='Enter'){ submit(); }
+    else if(/^[A-Z]$/.test(k)&&curGuess.length<5){ curGuess+=k; updateRow(); }
+  }
+
+  function updateRow(){
+    for(var c=0;c<5;c++){
+      var cell=document.getElementById('wc'+curRow+c);
+      if(cell){ cell.textContent=curGuess[c]||''; cell.style.borderColor=curGuess[c]?'#6b6b80':'var(--border)'; }
+    }
+  }
+
+  function submit(){
+    if(curGuess.length<5){ msgEl.textContent='Need 5 letters!'; return; }
+    var g=curGuess, rem=answer.split(''), res=Array(5).fill('absent');
+    for(var i=0;i<5;i++){if(g[i]===answer[i]){res[i]='correct';rem[rem.indexOf(g[i])]='_';}}
+    for(var i=0;i<5;i++){if(res[i]==='correct')continue;var idx=rem.indexOf(g[i]);if(idx!==-1){res[i]='present';rem[idx]='_';}}
+    for(var c=0;c<5;c++){
+      var cell=document.getElementById('wc'+curRow+c);
+      if(cell){cell.className='wcell '+res[c]; cell.textContent=g[c];}
+      var pri={correct:3,present:2,absent:1};
+      if((pri[res[c]]||0)>(pri[keyState[g[c]]]||0)){
+        keyState[g[c]]=res[c];
+        var kEl=document.getElementById('wk_'+g[c]);
+        if(kEl) kEl.className='wkey '+res[c];
+      }
+    }
+    if(res.every(function(r){return r==='correct';})){msgEl.textContent='BRILLIANT! You got it!';over=true;addPlayAgain();return;}
+    curRow++; curGuess=''; msgEl.textContent='';
+    if(curRow>=maxTries){msgEl.textContent='Answer: '+answer;over=true;addPlayAgain();}
+  }
+
+  function addPlayAgain(){
+    var rb=mkBtn('PLAY AGAIN','p'); rb.style.margin='0 auto'; rb.style.display='block';
+    rb.addEventListener('click',function(){ stopAll(); gc().innerHTML=''; BUILDERS.wordle(); });
+    wrap.appendChild(rb);
+  }
+
+  addKey(function(e){ handleKey(e.key==='Backspace'?'Backspace':e.key.toUpperCase()); });
+};
+BUILDERS.wordle();
+    </script>
+</body>
+</html>

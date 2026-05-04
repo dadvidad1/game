@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WHACK-A-NEON - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">WHACK-A-NEON</div>
+        <div id="gs-desc">Whack the glowing icons before they disappear.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.whack = function() {
+  var C=gc(); var wrap=el('div','wrap');
+  var diff = mkDifficulty(wrap, function(d){ diff = d; });
+
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="whSc">0</span>&nbsp;&nbsp;&nbsp;TIME: <span class="hv" id="whT">30</span>s'; wrap.appendChild(hud);
+  var grid=el('div',''); grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:1.5rem auto;padding:10px';
+  for(var i=0;i<9;i++){ var h=el('div',''); h.style.cssText='aspect-ratio:1;background:var(--card);border:1px solid var(--border);border-radius:50%;cursor:pointer;position:relative'; h.id='wh'+i; grid.appendChild(h); }
+  wrap.appendChild(grid);
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','WHACK-A-NEON'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+  C.appendChild(wrap);
+
+  var score=0,timeLeft=30,running=false,cur=-1,tId2;
+
+  function whack(i){
+    if(!running || i!==cur)return;
+    score++; document.getElementById('whSc').textContent=score;
+    clearTimeout(tId2); show();
+  }
+
+  function show(){
+    if(!running)return;
+    if(cur!==-1)document.getElementById('wh'+cur).style.background='var(--card)';
+    cur=Math.floor(Math.random()*9);
+    var h=document.getElementById('wh'+cur); h.style.background='var(--pink)'; h.style.boxShadow='0 0 20px var(--pink)';
+    var interval = [Math.max(600, 1200-score*20), Math.max(400, 1000-score*20), Math.max(250, 800-score*30)][diff];
+    tId2=setTimeout(function(){ h.style.background='var(--card)'; h.style.boxShadow='none'; show(); }, interval);
+  }
+
+  for(var i=0;i<9;i++){ (function(idx){ document.getElementById('wh'+idx).addEventListener('click',function(){whack(idx);}); })(i); }
+
+  sb.addEventListener('click',function(){
+    score=0; timeLeft=30; running=true; ov.style.display='none';
+    var tId=setInterval(function(){
+      timeLeft--; document.getElementById('whT').textContent=timeLeft;
+      if(timeLeft<=0){ 
+        clearInterval(tId); running=false; 
+        ovT.textContent='TIME!';
+        ov.style.display='flex';
+        sb.textContent='RESTART'; 
+        if(cur!==-1)document.getElementById('wh'+cur).style.background='var(--card)'; 
+      }
+    },1000);
+    stopFns.push(function(){ clearInterval(tId); clearTimeout(tId2); });
+    show();
+  });
+};
+BUILDERS.whack();
+    </script>
+</body>
+</html>

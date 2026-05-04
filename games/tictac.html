@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIC-TAC-TOE - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">TIC-TAC-TOE</div>
+        <div id="gs-desc">Classic X vs O against an unbeatable AI.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.tictac = function() {
+  var C=gc(); var wrap=el('div','wrap');
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','TIC-TAC-TOE'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+
+  var hud=el('div','hud'); hud.innerHTML='YOU (X) vs CPU (O)&nbsp;&nbsp;&nbsp;<span class="hv" id="ttMsg">YOUR TURN</span>'; wrap.appendChild(hud);
+
+  var grid=el('div','tt-grid'); wrap.appendChild(grid);
+  for(var i=0;i<9;i++){ var c=el('div','tt-cell'); c.id='t'+i; c.dataset.i=i; grid.appendChild(c); }
+  var cbar=el('div','cbar'); var rb=mkBtn('RESET','p'); cbar.appendChild(rb); wrap.appendChild(cbar);
+  C.appendChild(wrap);
+
+  var board=new Array(9).fill(null),over=false;
+
+  function checkWin(b){
+    var wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for(var w of wins) if(b[w[0]] && b[w[0]]===b[w[1]] && b[w[0]]===b[w[2]]) return b[w[0]];
+    return b.indexOf(null)===-1?'tie':null;
+  }
+
+  function minimax(b, depth, isMax){
+    var res=checkWin(b);
+    if(res==='O')return 10-depth; if(res==='X')return depth-10; if(res==='tie')return 0;
+    if(isMax){
+      var best=-Infinity;
+      for(var i=0;i<9;i++) if(!b[i]){ b[i]='O'; best=Math.max(best,minimax(b,depth+1,false)); b[i]=null; }
+      return best;
+    } else {
+      var best=Infinity;
+      for(var i=0;i<9;i++) if(!b[i]){ b[i]='X'; best=Math.min(best,minimax(b,depth+1,true)); b[i]=null; }
+      return best;
+    }
+  }
+
+  function cpuMove(){
+    if(over)return;
+    
+    var randProb = [0.4, 0.15, 0][diff];
+    if(Math.random() < randProb) {
+      var empty = board.map((v,i) => v===null?i:null).filter(v => v!==null);
+      if(empty.length) { makeMove(empty[Math.floor(Math.random()*empty.length)], 'O'); return; }
+    }
+
+    var bestV=-Infinity,move=-1;
+    for(var i=0;i<9;i++) if(!board[i]){ board[i]='O'; var v=minimax(board,0,false); board[i]=null; if(v>bestV){bestV=v;move=i;} }
+    if(move!==-1) makeMove(move,'O');
+  }
+
+  function makeMove(i,p){
+    board[i]=p; var c=document.getElementById('t'+i); c.textContent=p; c.classList.add(p.toLowerCase(),'taken');
+    var res=checkWin(board);
+    if(res){ 
+      over=true; 
+      ovT.textContent=res==='tie'?"IT'S A TIE!":res==='X'?"YOU WIN!":"CPU WINS!"; 
+      ov.style.display='flex';
+      sb.textContent='RESTART';
+    }
+    else if(p==='X') { document.getElementById('ttMsg').textContent="CPU THINKING..."; setTimeout(cpuMove,500); }
+    else { document.getElementById('ttMsg').textContent="YOUR TURN"; }
+  }
+
+  grid.querySelectorAll('.tt-cell').forEach(function(c){
+    c.addEventListener('click',function(){ if(!over && !board[c.dataset.i]){ makeMove(c.dataset.i,'X'); } });
+  });
+
+  sb.addEventListener('click',function(){ board.fill(null); over=false; ov.style.display='none'; document.getElementById('ttMsg').textContent="YOUR TURN"; grid.querySelectorAll('.tt-cell').forEach(function(x){x.textContent='';x.className='tt-cell';}); });
+  rb.addEventListener('click',function(){ board.fill(null); over=false; document.getElementById('ttMsg').textContent="YOUR TURN"; grid.querySelectorAll('.tt-cell').forEach(function(x){x.textContent='';x.className='tt-cell';}); });
+};
+BUILDERS.tictac();
+    </script>
+</body>
+</html>

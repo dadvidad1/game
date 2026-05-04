@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIPHER QUEST - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">CIPHER QUEST</div>
+        <div id="gs-desc">Decode Caesar-ciphered messages to earn points.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.cipher = function() {
+  var MSGS=[
+    {plain:'HELLO WORLD',shift:3},
+    {plain:'THE QUICK BROWN FOX',shift:13},
+    {plain:'NEON ARCADE ROCKS',shift:7},
+    {plain:'CRACK THE CODE',shift:5},
+    {plain:'GAME OVER INSERT COIN',shift:20},
+    {plain:'PIXEL PERFECT',shift:9},
+    {plain:'LEVEL UP',shift:4},
+  ];
+  var cur=0,score=0,streak=0;
+
+  var C=gc();
+  var wrap=el('div','wrap');
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="cqSc">0</span>&nbsp;&nbsp;&nbsp;STREAK: <span class="hv" id="cqSt">0</span>&nbsp;&nbsp;&nbsp;CIPHER QUEST'; wrap.appendChild(hud);
+  var body=el('div',''); body.style.padding='1.2rem';
+  var lbl=el('div',''); lbl.style.cssText='font-size:.65rem;letter-spacing:.2em;color:#6b6b80;margin-bottom:.4rem;text-transform:uppercase'; lbl.textContent='ENCODED MESSAGE:'; body.appendChild(lbl);
+  var encDiv=el('div','cipherEnc'); encDiv.id='cqEnc'; body.appendChild(encDiv);
+  var hintDiv=el('div','cipherHint'); hintDiv.id='cqHint'; body.appendChild(hintDiv);
+  var row=el('div','cbar');
+  var inp=el('input','tinput'); inp.id='cqInp'; inp.placeholder='TYPE DECODED MESSAGE'; inp.style.maxWidth='300px';
+  var sb=mkBtn('DECODE','p'); var sk=mkBtn('SKIP','');
+  row.appendChild(inp); row.appendChild(sb); row.appendChild(sk); body.appendChild(row);
+  var msg=el('div','msg'); msg.id='cqMsg'; body.appendChild(msg);
+  wrap.appendChild(body); 
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','CIPHER QUEST'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; load(); });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+  C.appendChild(wrap);
+
+  sb.addEventListener('click', function(){ ov.style.display='none'; });
+
+  function encode(plain,shift){ return plain.split('').map(function(c){ if(c===' ')return ' '; var code=c.charCodeAt(0)-65; return String.fromCharCode(((code+shift)%26)+65); }).join(''); }
+
+  function load(){
+    var m=MSGS[cur%MSGS.length];
+    document.getElementById('cqEnc').textContent=encode(m.plain,m.shift);
+    var hint = document.getElementById('cqHint');
+    if(diff === 0) hint.textContent='Hint: Caesar shift +'+m.shift;
+    else if(diff === 1) hint.textContent='Hint: Hidden...';
+    else hint.textContent='';
+    
+    document.getElementById('cqInp').value='';
+    document.getElementById('cqMsg').textContent='';
+    
+    if(diff === 1) {
+      setTimeout(function(){
+        if(document.getElementById('cqEnc').textContent === encode(m.plain,m.shift)) {
+           hint.textContent='Hint: Caesar shift +'+m.shift;
+        }
+      }, 10000);
+    }
+  }
+
+  sb.addEventListener('click',function(){
+    var inp2=document.getElementById('cqInp');
+    var val=inp2.value.toUpperCase().trim();
+    var ans=MSGS[cur%MSGS.length].plain;
+    if(val===ans){
+      var pts=10+streak*5; score+=pts; streak++;
+      document.getElementById('cqSc').textContent=score;
+      document.getElementById('cqSt').textContent=streak;
+      document.getElementById('cqMsg').textContent='CORRECT! +'+pts+' pts';
+      setTimeout(function(){ cur++; load(); },900);
+    } else {
+      streak=0; document.getElementById('cqSt').textContent=0;
+      document.getElementById('cqMsg').textContent='Wrong, try again...';
+    }
+  });
+
+  sk.addEventListener('click',function(){ streak=0; cur++; load(); document.getElementById('cqSt').textContent=0; });
+
+  document.getElementById('cqInp').addEventListener('keydown',function(e){ if(e.key==='Enter')sb.click(); });
+  load();
+};
+BUILDERS.cipher();
+    </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 NEON - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">2048 NEON</div>
+        <div id="gs-desc">Arrow keys to slide tiles. Reach the 2048 tile!</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.g2048 = function() {
+  var C=gc(); var wrap=el('div','wrap');
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="gSc">0</span>&nbsp;&nbsp;&nbsp;USE ARROWS'; wrap.appendChild(hud);
+  var grid=el('div','g2048-grid'); wrap.appendChild(grid);
+  for(var i=0;i<16;i++){ var c=el('div','g2048-cell'); c.id='g'+i; grid.appendChild(c); }
+  var msg=el('div','msg'); msg.id='gMsg'; wrap.appendChild(msg);
+  var cbar=el('div','cbar'); var rb=mkBtn('RESET','p'); cbar.appendChild(rb); wrap.appendChild(cbar);
+  
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','2048 NEON'); ov.appendChild(ovT);
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb);
+  wrap.appendChild(ov);
+  C.appendChild(wrap);
+
+  sb.addEventListener('click', function(){ ov.style.display='none'; });
+
+  var board=new Array(16).fill(0),score=0,over=false;
+
+  function spawn(){
+    var empty=board.map(function(v,i){return v===0?i:null;}).filter(function(v){return v!==null;});
+    if(empty.length){ 
+      var idx=empty[Math.floor(Math.random()*empty.length)]; 
+      var fourProb = [0.05, 0.1, 0.2][diff];
+      board[idx]=Math.random()>fourProb?2:4; 
+    }
+  }
+
+  function draw(){
+    board.forEach(function(v,i){
+      var c=document.getElementById('g'+i);
+      c.textContent=v||''; c.dataset.v=v;
+    });
+    document.getElementById('gSc').textContent=score;
+  }
+
+  function slide(row){
+    var n=row.filter(Boolean);
+    for(var i=0;i<n.length-1;i++){ if(n[i]===n[i+1]){n[i]*=2;score+=n[i];n.splice(i+1,1);} }
+    while(n.length<4)n.push(0); return n;
+  }
+
+  function move(dir){
+    if(over)return;
+    var old=JSON.stringify(board);
+    for(var i=0;i<4;i++){
+      var idxs=[]; if(dir==='L')idxs=[i*4,i*4+1,i*4+2,i*4+3];
+      else if(dir==='R')idxs=[i*4+3,i*4+2,i*4+1,i*4];
+      else if(dir==='U')idxs=[i,i+4,i+8,i+12];
+      else if(dir==='D')idxs=[i+12,i+8,i+4,i];
+      var row=idxs.map(function(j){return board[j];});
+      var next=slide(row);
+      idxs.forEach(function(j,k){board[j]=next[k];});
+    }
+    if(old!==JSON.stringify(board)){spawn();draw();check();}
+  }
+
+  function check(){
+    if(board.indexOf(2048)!==-1){document.getElementById('gMsg').textContent='YOU REACHED 2048!';}
+    if(board.indexOf(0)===-1){
+      var stuck=true;
+      for(var i=0;i<16;i++){
+        var v=board[i];
+        if((i%4<3&&v===board[i+1])||(i<12&&v===board[i+4])){stuck=false;break;}
+      }
+      if(stuck){over=true;document.getElementById('gMsg').textContent='GAME OVER';}
+    }
+  }
+
+  addKey(function(e){
+    if(e.key==='ArrowLeft')move('L'); else if(e.key==='ArrowRight')move('R');
+    else if(e.key==='ArrowUp')move('U'); else if(e.key==='ArrowDown')move('D');
+  });
+
+  rb.addEventListener('click',function(){ board.fill(0); score=0; over=false; document.getElementById('gMsg').textContent=''; spawn(); spawn(); draw(); });
+  spawn(); spawn(); draw();
+};
+BUILDERS.g2048();
+    </script>
+</body>
+</html>

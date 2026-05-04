@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DINO RUN - NEON ARCADE</title>
+    <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+    <div id="gs">
+        <a href="../index.html" class="backBtn">&#8592; BACK TO HUB</a>
+        <div id="gs-title">DINO RUN</div>
+        <div id="gs-desc">Space/Tap to jump. Avoid obstacles and survive.</div>
+        <div id="gc"></div>
+    </div>
+    <script src="../shared/core.js"></script>
+    <script>
+BUILDERS.dino = function() {
+  var C=gc(); var wrap=el('div','wrap'); wrap.style.position='relative';
+  var hud=el('div','hud'); hud.innerHTML='SCORE: <span class="hv" id="dnSc">0</span>&nbsp;&nbsp;&nbsp;HI: <span class="hv" id="dnHi">0</span>'; wrap.appendChild(hud);
+  var cv=document.createElement('canvas'); cv.width=600; cv.height=200; cv.style.width='100%'; cv.style.display='block'; wrap.appendChild(cv);
+  var ov=el('div','ov');
+  ov.style.zIndex = '100';
+  var ovT=el('div','ov-title','DINO RUN'); ov.appendChild(ovT); 
+  var diff = mkDifficulty(ov, function(d){ diff = d; });
+  var sb=mkBtn('START','p'); ov.appendChild(sb); wrap.appendChild(ov); C.appendChild(wrap);
+  
+  var ctx=cv.getContext('2d');
+  var dino={x:50,y:150,w:30,h:30,vy:0,jump:false},obs=[],score=0,hi=0,running=false,speed=5;
+
+  function spawn(){ obs.push({x:600,y:150,w:20,h:30}); }
+  function jump(){ if(!dino.jump){dino.vy=-12; dino.jump=true;} }
+
+  sb.addEventListener('click',function(){ 
+    score=0; obs=[]; 
+    var startSpds = [4, 5, 7.5];
+    speed=startSpds[diff]; 
+    running=true; ov.style.display='none'; spawn(); 
+  });
+  addKey(function(e){ if(e.code==='Space'||e.key==='ArrowUp') jump(); });
+  cv.addEventListener('touchstart',function(e){ e.preventDefault(); jump(); });
+
+  addLoop(function(){
+    if(!running) return;
+    score++; document.getElementById('dnSc').textContent=score;
+    if(score%500===0) speed+=0.5;
+    if(score%100===0 && Math.random()>0.7) spawn();
+    dino.vy+=0.8; dino.y+=dino.vy;
+    if(dino.y>150){ dino.y=150; dino.vy=0; dino.jump=false; }
+    obs.forEach(function(o,i){
+      o.x-=speed;
+      if(dino.x<o.x+o.w && dino.x+dino.w>o.x && dino.y<o.y+o.h && dino.y+dino.h>o.y){
+        running=false; if(score>hi){hi=score; document.getElementById('dnHi').textContent=hi;}
+        ovT.textContent='GAME OVER'; sb.textContent='RESTART'; ov.style.display='flex';
+      }
+    });
+    obs=obs.filter(function(o){return o.x>-20;});
+    ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,600,200);
+    ctx.fillStyle='#39ff14'; ctx.fillRect(dino.x,dino.y,dino.w,dino.h);
+    ctx.fillStyle='#ff006e'; obs.forEach(function(o){ ctx.fillRect(o.x,o.y,o.w,o.h); });
+    ctx.strokeStyle='#2a2a3a'; ctx.beginPath(); ctx.moveTo(0,180); ctx.lineTo(600,180); ctx.stroke();
+  }, 1000/60);
+};
+BUILDERS.dino();
+    </script>
+</body>
+</html>
